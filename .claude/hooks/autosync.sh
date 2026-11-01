@@ -13,6 +13,7 @@ case "$1" in
       || echo "[autosync] pull 실패: 충돌이 있는지 확인하세요." >&2
     ;;
   push)
+    bash .claude/build.sh 2>/dev/null
     git add -A
     if ! git diff --cached --quiet; then
       git commit -q -m "자동 저장: $(date '+%Y-%m-%d %H:%M') ($(hostname))"

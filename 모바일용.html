@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배움의 일생</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f3ee;
+  --paper: #ffffff;
+  --ink: #2b2a28;
+  --muted: #8a857c;
+  --line: #e7e1d7;
+  --accent: #3d5afe;
+  --radius: 16px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+@supports (height: 100dvh) { body { height: 100dvh; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans KR", system-ui, sans-serif;
+  line-height: 1.6;
+}
+.screen { display: none; height: 100%; max-width: 640px; margin: 0 auto; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* 버튼 */
+.btn {
+  font: inherit; font-weight: 500;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  padding: 12px 18px; border-radius: 12px; cursor: pointer;
+  transition: transform .1s, background .2s;
+}
+.btn:hover { background: #faf8f4; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.primary:hover { background: #444; }
+.btn:disabled { opacity: .4; cursor: default; }
+
+/* 시작 */
+#startScreen { justify-content: center; padding: 24px; }
+.start-box { text-align: center; display: flex; flex-direction: column; gap: 14px; }
+.start-box h1 { font-size: 44px; font-weight: 900; margin: 0; letter-spacing: -1px; }
+.subtitle { color: var(--muted); margin: 0 0 20px; }
+#nameInput {
+  font: inherit; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--line); text-align: center; background: var(--paper);
+}
+
+/* 상단 */
+.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 16px 8px; }
+.who { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #eee; }
+.age { font-size: 40px; font-weight: 900; line-height: 1; }
+.age small { font-size: 16px; font-weight: 500; margin-left: 2px; color: var(--muted); }
+
+/* 능력치 */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px 16px; }
+.stat { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; position: relative; }
+.stat .name { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+.stat .name b { color: var(--ink); }
+.stat .bar { height: 6px; background: #f0ece5; border-radius: 99px; margin-top: 6px; overflow: hidden; }
+.stat .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.float {
+  position: absolute; right: 8px; top: -6px; font-size: 12px; font-weight: 700;
+  animation: floatUp 1.4s ease forwards; pointer-events: none;
+}
+@keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-18px); } }
+
+/* 인생 진행 막대 */
+.timeline-bar { display: flex; gap: 3px; padding: 4px 16px 8px; }
+.timeline-bar div { flex: 1; height: 4px; border-radius: 99px; background: #e4ded3; transition: background .4s; }
+
+/* 기록 */
+.log { flex: 1; overflow-y: auto; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+.entry { display: flex; gap: 12px; font-size: 15px; animation: fadeIn .4s ease; }
+.entry .y { min-width: 40px; color: var(--muted); font-size: 13px; padding-top: 2px; text-align: right; }
+.entry.stage { margin-top: 12px; font-weight: 700; }
+.entry.event .t { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+.controls { display: flex; gap: 8px; padding: 12px 16px 20px; }
+.controls .btn { flex: 1; white-space: nowrap; }
+
+/* 이벤트 창 */
+.modal {
+  position: fixed; inset: 0; background: rgba(30, 28, 24, .45);
+  display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+}
+.modal.open { display: flex; }
+.card {
+  background: var(--paper); border-radius: var(--radius); width: 100%; max-width: 520px;
+  max-height: 92vh; overflow-y: auto; padding: 22px; animation: pop .25s ease;
+}
+@keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.card-head { display: flex; justify-content: space-between; align-items: center; }
+.ev-age { color: var(--muted); font-size: 14px; }
+.card h2 { margin: 10px 0; font-size: 22px; }
+.ev-image { width: 100%; border-radius: 12px; margin-bottom: 10px; display: none; }
+.ev-text { white-space: pre-line; margin: 0 0 16px; }
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choices .btn { text-align: left; }
+.result { display: none; }
+.deltas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.deltas span { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #f3f0ea; }
+.info { background: #f2f5ff; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 14px; }
+.info p { white-space: pre-line; margin: 6px 0 0; }
+#evContinue { width: 100%; }
+
+/* 엔딩 */
+#endScreen { overflow-y: auto; }
+.end-box { padding: 32px 16px; text-align: center; }
+.end-label { color: var(--muted); margin: 0; }
+.end-box h2 { font-size: 32px; margin: 4px 0 12px; }
+.end-text { white-space: pre-line; }
+.end-box h3 { margin-top: 24px; }
+.edu-list { list-style: none; padding: 0; text-align: left; margin-bottom: 24px; }
+.edu-list li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; }
+.edu-list li small { color: var(--muted); margin-right: 8px; }
+
+@media (max-width: 420px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .start-box h1 { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+  <!-- 시작 화면 -->
+  <section id="startScreen" class="screen active">
+    <div class="start-box">
+      <h1 id="gameTitle"></h1>
+      <p id="gameSubtitle" class="subtitle"></p>
+      <input id="nameInput" maxlength="8" placeholder="이름을 입력하세요 (비우면 무작위)">
+      <button id="startBtn" class="btn primary">인생 시작하기</button>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="gameScreen" class="screen">
+    <header class="top">
+      <div class="who">
+        <span id="stageTag" class="tag"></span>
+        <strong id="nameText"></strong>
+      </div>
+      <div class="age"><span id="ageText">0</span><small>세</small></div>
+    </header>
+    <div id="stats" class="stats"></div>
+    <div id="timelineBar" class="timeline-bar"></div>
+    <main id="log" class="log"></main>
+    <footer class="controls">
+      <button id="nextBtn" class="btn primary">▶ 1년 보내기</button>
+      <button id="skipBtn" class="btn">⏩ 다음 이벤트</button>
+    </footer>
+  </section>
+
+  <!-- 엔딩 화면 -->
+  <section id="endScreen" class="screen">
+    <div class="end-box">
+      <p class="end-label">인생의 끝에서</p>
+      <h2 id="endTitle"></h2>
+      <p id="endText" class="end-text"></p>
+      <div id="endStats" class="stats"></div>
+      <h3>나의 평생교육 이력</h3>
+      <ul id="eduList" class="edu-list"></ul>
+      <button id="restartBtn" class="btn primary">다시 태어나기</button>
+    </div>
+  </section>
+
+  <!-- 이벤트 창 -->
+  <div id="eventModal" class="modal">
+    <div class="card">
+      <div class="card-head">
+        <span id="evStage" class="tag"></span>
+        <span id="evAge" class="ev-age"></span>
+      </div>
+      <h2 id="evTitle"></h2>
+      <img id="evImage" class="ev-image" alt="">
+      <p id="evText" class="ev-text"></p>
+      <div id="evChoices" class="choices"></div>
+      <div id="evResult" class="result">
+        <p id="evResultText" class="ev-text"></p>
+        <div id="evDeltas" class="deltas"></div>
+        <div id="evInfo" class="info">
+          <strong>📚 평생교육 알아보기</strong>
+          <p id="evInfoText"></p>
+        </div>
+        <button id="evContinue" class="btn primary">계속</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 데이터: 새 스크립트 파일은 여기에 추가 -->
+<script>
+// 게임 기본 설정
+const SETTINGS = {
+  title: "배움의 일생",
+  subtitle: "평생교육과 함께하는 한 사람의 80년",
+  maxAge: 80,                       // 이 나이가 되면 엔딩
+  stats: ["지식", "건강", "행복", "자산"],
+  startStats: { 지식: 30, 건강: 60, 행복: 60, 자산: 50 },
+  statColors: { 지식: "#4f7cff", 건강: "#2fb47c", 행복: "#ff9f43", 자산: "#b07cff" },
+  bgm: "",                          // 예: "missing:sounds/bgm.mp3"
+  randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
+};
+
+const STAGES = [];
+const EVENTS = [];
+const ENDINGS = [];
+function addStage(s) { STAGES.push(s); }
+function addEvent(e) { EVENTS.push(e); }
+function addEnding(e) { ENDINGS.push(e); }
+</script>
+<script>
+// 인생 시기 구분
+// lines: 이벤트가 없는 해에 무작위로 나오는 한 줄 일기
+addStage({
+  id: "영유아", from: 0, to: 7, color: "#ffb3c1",
+  lines: [
+    "{이름}이(가) 처음으로 걸음마를 뗐다.",
+    "동네 놀이터가 세상의 전부였다.",
+    "그림책을 읽어 달라고 졸랐다.",
+    "감기에 걸려 며칠 동안 집에만 있었다.",
+  ],
+});
+addStage({
+  id: "청소년", from: 8, to: 19, color: "#8fd3ff",
+  lines: [
+    "새 학년, 새 친구들을 만났다.",
+    "시험 기간이라 밤늦게까지 공부했다.",
+    "친구들과 노래방에서 스트레스를 풀었다.",
+    "장래희망 칸을 비워 두었다.",
+  ],
+});
+addStage({
+  id: "대학생", from: 20, to: 26, color: "#a0e7a0",
+  lines: [
+    "수강신청 전쟁에서 살아남았다.",
+    "동아리 MT를 다녀왔다.",
+    "편의점 아르바이트로 용돈을 벌었다.",
+    "졸업 후 진로를 고민하는 밤이 늘었다.",
+  ],
+});
+addStage({
+  id: "성인", from: 27, to: 49, color: "#ffd580",
+  lines: [
+    "월요일 아침 지하철은 오늘도 꽉 찼다.",
+    "야근이 이어진 한 주였다.",
+    "오랜만에 친구들과 저녁을 먹었다.",
+    "연말 정산 결과에 웃고 울었다.",
+  ],
+});
+addStage({
+  id: "중장년", from: 50, to: 64, color: "#d4a5ff",
+  lines: [
+    "건강검진 결과표를 오래 들여다봤다.",
+    "자녀가 독립해 집이 조용해졌다.",
+    "은퇴 후의 삶을 처음으로 진지하게 생각했다.",
+    "주말 등산이 새 취미가 되었다.",
+  ],
+});
+addStage({
+  id: "노년", from: 65, to: 200, color: "#c9b79c",
+  lines: [
+    "손주가 놀러 와 집이 북적였다.",
+    "아침 산책길에 이웃과 인사를 나눴다.",
+    "오래된 사진첩을 꺼내 보았다.",
+    "복지관 게시판에서 새 프로그램 안내를 봤다.",
+  ],
+});
+</script>
+<script>
+// 교육 이벤트 목록
+// 형식 안내는 스크립트_양식.md 참고
+
+// ───────── 영유아 ─────────
+addEvent({
+  id: "영어유치원",
+  age: 5,
+  title: "영어유치원 입학 상담",
+  image: "",
+  text: `{이름}이(가) 다섯 살이 되었다.
+동네 엄마들 사이에서 "요즘은 영어유치원이 기본"이라는 말이 돈다.
+한 달 원비는 웬만한 대학 등록금 수준. 부모님은 고민에 빠졌다.`,
+  choices: [
+    {
+      text: "영어유치원에 보낸다",
+      effects: { 지식: 8, 자산: -15, 행복: -5 },
+      edu: "영어유치원",
+      result: `{이름}은(는) 영어 노래를 곧잘 따라 부르게 되었다.
+하지만 하원 버스에서 내릴 때면 가끔 지쳐 보였다.`,
+    },
+    {
+      text: "놀이 중심의 일반 유치원에 보낸다",
+      effects: { 행복: 8, 건강: 5 },
+      edu: "일반 유치원(놀이 중심 누리과정)",
+      result: `{이름}은(는) 친구들과 흙장난을 하며 해가 지는 줄 몰랐다.
+"오늘은 개미집을 찾았어!" 매일 저녁 이야기가 넘쳤다.`,
+    },
+    {
+      text: "공공도서관 영어 그림책 프로그램에 함께 다닌다",
+      effects: { 지식: 5, 행복: 6, 자산: -2 },
+      edu: "공공도서관 영유아 그림책 프로그램",
+      result: `주말마다 부모님과 도서관에 갔다.
+영어 그림책을 읽어 주는 선생님 목소리에 {이름}의 눈이 반짝였다.`,
+    },
+  ],
+  info: `평생교육은 태어나는 순간부터 시작됩니다.
+전국 공공도서관과 육아종합지원센터에서는 영유아와 부모가 함께하는 독서·놀이 프로그램을 무료나 저렴한 비용으로 운영합니다.
+이 시기에는 이른 학습보다 충분한 놀이와 정서적 안정이 더 중요하다는 연구가 많습니다.`,
+});
+
+// ───────── 청소년 ─────────
+addEvent({
+  id: "대형학원",
+  age: 15,
+  title: "대형 학원의 설명회",
+  image: "",
+  text: `중학교 2학년 겨울방학.
+반 친구들 대부분이 대치동 유명 학원 '선행 종합반'에 등록했다는 소식이 들린다.
+학원 설명회에서 강사는 말했다. "지금 시작하지 않으면 늦습니다."`,
+  choices: [
+    {
+      text: "대형 학원 종합반에 등록한다",
+      effects: { 지식: 10, 자산: -15, 건강: -8, 행복: -6 },
+      edu: "대형 학원 선행 종합반",
+      result: `밤 10시에 끝나는 수업, 쏟아지는 숙제.
+성적은 올랐지만 {이름}은(는) 늘 잠이 부족했다.`,
+    },
+    {
+      text: "EBS 강의로 스스로 공부한다",
+      effects: { 지식: 6, 자산: -2, 행복: 2 },
+      edu: "EBS 온라인 강의 자기주도 학습",
+      result: `처음엔 계획대로 되지 않아 애를 먹었다.
+하지만 스스로 공부하는 방법을 익히면서 자신감이 생겼다.`,
+    },
+    {
+      text: "청소년수련관 진로체험 프로그램에 참여한다",
+      effects: { 지식: 4, 행복: 7, 건강: 3 },
+      edu: "청소년수련관 진로체험 프로그램",
+      result: `방송국, 연구소, 요리 교실을 돌아다니며 다양한 직업을 체험했다.
+{이름}은(는) 처음으로 "이런 일을 해 보고 싶다"는 생각이 들었다.`,
+    },
+  ],
+  info: `학교 밖에도 배움의 길은 많습니다.
+EBS 무료 강의, 지역 청소년수련관·청소년문화의집의 진로체험, 학교 방과후학교 등은 사교육비 부담 없이 이용할 수 있는 대표적인 교육 기회입니다.`,
+});
+
+// ───────── 대학생 ─────────
+addEvent({
+  id: "AI캠프",
+  age: 22,
+  title: "AI 활용 겨울 캠프 모집",
+  image: "",
+  text: `대학교 3학년 겨울방학을 앞두고 학교 게시판에 공고가 붙었다.
+[생성형 AI 실무 활용 캠프 - 4주 과정, 수료증 발급]
+과제, 취업 준비, 코딩까지 AI로 해내는 법을 배운다고 한다.`,
+  choices: [
+    {
+      text: "4주 캠프에 참가한다",
+      effects: { 지식: 10, 건강: -3, 행복: 3 },
+      edu: "대학 생성형 AI 실무 활용 캠프",
+      result: `프롬프트 작성부터 자료 분석, 간단한 자동화까지 배웠다.
+"AI를 쓰는 사람과 못 쓰는 사람의 차이"라는 강사의 말이 오래 남았다.`,
+    },
+    {
+      text: "K-MOOC 무료 온라인 강좌로 혼자 배운다",
+      effects: { 지식: 6, 행복: 1 },
+      edu: "K-MOOC 인공지능 기초 강좌",
+      result: `원하는 시간에 강의를 들으며 기초 개념을 익혔다.
+다만 혼자 하다 보니 중간에 몇 번 미루기도 했다.`,
+    },
+    {
+      text: "방학 동안 아르바이트에 집중한다",
+      effects: { 자산: 10, 행복: -2 },
+      result: `통장 잔고는 든든해졌다.
+개강 후, 캠프를 다녀온 동기들이 AI로 과제를 척척 해내는 모습이 눈에 들어왔다.`,
+    },
+  ],
+  info: `K-MOOC(한국형 온라인 공개강좌)는 국내 대학의 강의를 누구나 무료로 들을 수 있는 평생학습 플랫폼입니다.
+디지털·AI 역량은 학생뿐 아니라 모든 세대에게 필요한 '새로운 기초 소양'으로 꼽힙니다.`,
+});
+
+// ───────── 성인(직장인) ─────────
+addEvent({
+  id: "직무워크숍",
+  age: 33,
+  title: "직무 역량 향상 워크숍",
+  image: "",
+  text: `입사 7년 차. 업무는 익숙해졌지만 새로운 도구와 방식이 빠르게 바뀌고 있다.
+인사팀에서 메일이 왔다. [직무별 업무능력 향상 워크숍 - 주말 이틀 과정]
+마침 국민내일배움카드로 들을 수 있는 자격증 과정도 눈에 띈다.`,
+  choices: [
+    {
+      text: "회사 워크숍에 참가한다",
+      effects: { 지식: 7, 자산: 6, 건강: -3 },
+      edu: "직무별 업무능력 향상 워크숍",
+      result: `다른 부서 사람들과 실제 업무 사례를 나누며 배웠다.
+몇 달 뒤 평가에서 "업무 개선 아이디어가 돋보인다"는 평을 받았다.`,
+    },
+    {
+      text: "국민내일배움카드로 자격증 과정을 듣는다",
+      effects: { 지식: 9, 자산: -2, 행복: 2, 건강: -2 },
+      edu: "국민내일배움카드 직업훈련 과정",
+      result: `퇴근 후 온라인 강의를 듣고 주말엔 실습을 했다.
+쉽지 않았지만 자격증을 손에 쥔 날, 스스로가 조금 자랑스러웠다.`,
+    },
+    {
+      text: "주말엔 쉬어야 한다. 이번엔 넘긴다",
+      effects: { 건강: 5, 행복: 4 },
+      result: `푹 쉬고 나니 몸은 가벼워졌다.
+하지만 새 프로그램 도입 회의에서 혼자만 용어를 못 알아들어 진땀을 뺐다.`,
+    },
+  ],
+  info: `국민내일배움카드는 재직자·구직자 등 대부분의 국민이 직업훈련비를 지원받을 수 있는 제도입니다.
+일하는 동안에도 꾸준히 배우는 것은 변화하는 일터에 적응하는 가장 확실한 방법입니다.`,
+});
+
+// ───────── 중장년 ─────────
+addEvent({
+  id: "자산관리강의",
+  age: 53,
+  title: "노후 대비 자산관리 강의",
+  image: "",
+  text: `퇴직까지 10년도 남지 않았다.
+주민센터 게시판에 [인생 2막 준비 - 노후 자산관리 무료 강의] 안내문이 붙어 있다.
+그런데 같은 날, 오랜 지인이 "확실한 투자처가 있다"며 연락을 해 왔다.`,
+  choices: [
+    {
+      text: "노후 자산관리 강의를 수강한다",
+      effects: { 지식: 6, 자산: 10, 행복: 3 },
+      edu: "노후 대비 자산관리 강의",
+      result: `연금, 보험, 지출 관리까지 하나씩 점검했다.
+막연한 불안이 '계획'으로 바뀌자 밤잠이 편해졌다.`,
+    },
+    {
+      text: "지인의 투자 제안을 따른다",
+      edu: null,
+      outcomes: [
+        {
+          chance: 0.3,
+          effects: { 자산: 12, 행복: 5 },
+          result: `운 좋게 수익이 났다.
+하지만 {이름}은(는) 그게 정말 실력이었는지 확신할 수 없었다.`,
+        },
+        {
+          chance: 0.7,
+          effects: { 자산: -20, 행복: -10, 건강: -5 },
+          result: `"확실하다"던 투자처는 연락이 끊겼다.
+모아 둔 노후 자금의 상당 부분이 사라졌다.`,
+        },
+      ],
+    },
+    {
+      text: "중장년 인생설계 프로그램(50+센터)에 참여한다",
+      effects: { 지식: 5, 행복: 7, 자산: 4 },
+      edu: "50+ 중장년 인생설계 프로그램",
+      result: `재무뿐 아니라 건강, 관계, 일까지 인생 후반전을 함께 설계했다.
+비슷한 고민을 가진 동료들을 만나 마음이 든든해졌다.`,
+    },
+  ],
+  info: `국민연금공단의 노후준비서비스, 지자체의 50+(중장년) 지원센터 등에서 재무·건강·여가·대인관계를 아우르는 노후 설계 교육을 받을 수 있습니다.
+금융 지식도 평생 배워야 하는 영역이며, 충분히 알아보지 않은 투자는 노후를 크게 흔들 수 있습니다.`,
+});
+
+// ───────── 노년 ─────────
+addEvent({
+  id: "바리스타자격증",
+  age: 67,
+  title: "복지관 바리스타 자격증반",
+  image: "",
+  text: `은퇴 후 2년. 하루가 길게만 느껴진다.
+동네 노인복지관에서 [시니어 바리스타 자격증 취득반] 수강생을 모집한다.
+수료 후에는 복지관 카페에서 일할 기회도 있다고 한다.`,
+  choices: [
+    {
+      text: "바리스타 자격증에 도전한다",
+      effects: { 지식: 6, 행복: 10, 자산: 5, 건강: 2 },
+      edu: "노인복지관 바리스타 자격증 과정",
+      result: `처음엔 우유 거품 하나 내기도 어려웠다.
+석 달 뒤, 복지관 카페에서 {이름}이(가) 내린 라떼에 손님이 엄지를 들었다.`,
+    },
+    {
+      text: "친구들과 노인대학 교양 강좌를 듣는다",
+      effects: { 지식: 4, 행복: 7, 건강: 3 },
+      edu: "노인대학 교양 강좌",
+      result: `역사, 스마트폰 활용, 노래 교실까지.
+매주 화요일은 친구들과 만나는 즐거운 날이 되었다.`,
+    },
+    {
+      text: "새로 배우기엔 늦었다. 집에서 쉰다",
+      effects: { 건강: -5, 행복: -6 },
+      result: `TV 소리만 가득한 날들이 이어졌다.
+문득 '그때 해 볼 걸' 하는 생각이 들었다.`,
+    },
+  ],
+  info: `배움에 늦은 나이는 없습니다.
+노인복지관, 평생학습관, 노인일자리 및 사회활동 지원사업 등을 통해 노년기에도 새 기술을 배우고 사회에 참여할 수 있습니다.
+꾸준한 배움과 사회 활동은 인지 건강과 삶의 만족도를 높이는 데 도움이 됩니다.`,
+});
+</script>
+<script>
+// 엔딩 목록: 위에서부터 조건을 확인해 처음 맞는 엔딩이 나온다
+// requires: { min: {...}, max: {...}, flags: [...], eduCount: 숫자 }
+addEnding({
+  title: "평생 배움의 달인",
+  requires: { eduCount: 5 },
+  text: `{이름}은(는) 인생의 모든 시기마다 새로운 것을 배웠다.
+"배움은 끝나지 않는다"는 말은 {이름}에게 그저 사실이었다.`,
+});
+addEnding({
+  title: "지혜로운 어른",
+  requires: { min: { 지식: 60, 행복: 60 } },
+  text: `많이 알고, 또 즐겁게 살았다.
+주변 사람들은 고민이 생기면 {이름}을(를) 찾아왔다.`,
+});
+addEnding({
+  title: "넉넉한 노후",
+  requires: { min: { 자산: 65 } },
+  text: `차근차근 준비한 덕분에 노후는 여유로웠다.
+{이름}은(는) 그 여유를 가족, 이웃과 나누었다.`,
+});
+addEnding({
+  title: "소박하지만 행복한 삶",
+  requires: { min: { 행복: 60 } },
+  text: `대단한 성공은 없었지만, 웃음이 많은 삶이었다.`,
+});
+addEnding({
+  title: "아쉬움이 남는 삶",
+  requires: {},
+  text: `돌아보면 놓친 기회들이 떠오른다.
+그래도 {이름}은(는) 손주에게 말했다. "배우는 데는 늦은 때가 없단다."`,
+});
+</script>
+  <!-- 게임 엔진 -->
+<script>
+// 게임 엔진: 데이터(data 폴더)를 읽어 게임을 진행한다
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const S = {}; // 현재 게임 상태
+  let bgm = null;
+
+  // ── 유틸 ──
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+  const stageOf = (age) => STAGES.find((s) => age >= s.from && age <= s.to) || STAGES[STAGES.length - 1];
+
+  // {이름}과 조사 처리: {이름}이(가), 은(는), 을(를), 과(와), 아(야), 으로(로)
+  function fill(text) {
+    const name = S.name || "";
+    const last = name.charCodeAt(name.length - 1);
+    const hasBatchim = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0;
+    const josa = { "이(가)": ["이", "가"], "은(는)": ["은", "는"], "을(를)": ["을", "를"],
+      "과(와)": ["과", "와"], "아(야)": ["아", "야"], "으로(로)": ["으로", "로"] };
+    return (text || "")
+      .replace(/\{이름\}(이\(가\)|은\(는\)|을\(를\)|과\(와\)|아\(야\)|으로\(로\))/g,
+        (_, j) => name + josa[j][hasBatchim ? 0 : 1])
+      .replace(/\{이름\}/g, name);
+  }
+
+  // 조건 검사: { min:{지식:50}, max:{...}, flags:[...], notFlags:[...], eduCount:3 }
+  function meets(req) {
+    if (!req) return true;
+    for (const k in req.min || {}) if (S.stats[k] < req.min[k]) return false;
+    for (const k in req.max || {}) if (S.stats[k] > req.max[k]) return false;
+    for (const f of req.flags || []) if (!S.flags[f]) return false;
+    for (const f of req.notFlags || []) if (S.flags[f]) return false;
+    if (req.eduCount && S.edu.length < req.eduCount) return false;
+    return true;
+  }
+
+  function playSound(src) {
+    if (!src) return;
+    try { new Audio(src).play(); } catch (e) {}
+  }
+
+  // ── 화면 ──
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    $(id).classList.add("active");
+  }
+
+  function renderStats(target, withFloat = {}) {
+    const box = $(target);
+    box.innerHTML = "";
+    for (const k of SETTINGS.stats) {
+      const v = S.stats[k], c = SETTINGS.statColors[k] || "#888";
+      const d = withFloat[k];
+      box.insertAdjacentHTML("beforeend", `
+        <div class="stat">
+          <div class="name">${k}<b>${v}</b></div>
+          <div class="bar"><div class="fill" style="width:${v}%;background:${c}"></div></div>
+          ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
+        </div>`);
+    }
+  }
+
+  function renderTop() {
+    const st = stageOf(S.age);
+    $("ageText").textContent = S.age;
+    $("nameText").textContent = S.name;
+    $("stageTag").textContent = st.id;
+    $("stageTag").style.background = st.color;
+    // 인생 진행 막대
+    const bar = $("timelineBar");
+    bar.innerHTML = STAGES.map((s) =>
+      `<div style="background:${S.age >= s.from ? s.color : ""}" title="${s.id}"></div>`).join("");
+  }
+
+  function log(text, type = "", age = S.age) {
+    const el = document.createElement("div");
+    el.className = "entry " + type;
+    el.innerHTML = `<span class="y">${type === "stage" ? "" : age + "세"}</span><span class="t"></span>`;
+    el.querySelector(".t").textContent = fill(text);
+    $("log").appendChild(el);
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  // ── 진행 ──
+  function start() {
+    Object.assign(S, {
+      name: $("nameInput").value.trim() || pick(SETTINGS.randomNames),
+      age: 0,
+      stats: { ...SETTINGS.startStats },
+      flags: {}, done: {}, edu: [],
+      stage: null, busy: false,
+    });
+    $("log").innerHTML = "";
+    show("gameScreen");
+    renderTop();
+    renderStats("stats");
+    S.stage = stageOf(0).id;
+    log(`── ${S.stage} ──`, "stage");
+    log("{이름}이(가) 태어났다.");
+    if (SETTINGS.bgm && !bgm) { bgm = new Audio(SETTINGS.bgm); bgm.loop = true; bgm.play().catch(() => {}); }
+  }
+
+  function findEvent() {
+    return EVENTS.find((e) => {
+      if (S.done[e.id]) return false;
+      const ageOk = e.age != null ? e.age === S.age
+        : e.ages ? S.age >= e.ages[0] && S.age <= e.ages[1] : false;
+      if (!ageOk || !meets(e.requires)) return false;
+      return e.chance == null || Math.random() < e.chance;
+    });
+  }
+
+  // 1년 진행. 이벤트가 열리면 true 반환
+  function nextYear(quiet = false) {
+    if (S.busy) return true;
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    S.age++;
+    const st = stageOf(S.age);
+    if (st.id !== S.stage) { S.stage = st.id; log(`── ${st.id} ──`, "stage"); }
+    renderTop();
+    const ev = findEvent();
+    if (ev) { openEvent(ev); return true; }
+    if (!quiet && st.lines && st.lines.length) log(pick(st.lines));
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    return false;
+  }
+
+  function skipToEvent() {
+    while (!nextYear(true)) {}
+  }
+
+  // ── 이벤트 ──
+  function openEvent(ev) {
+    S.busy = true;
+    S.current = ev;
+    S.done[ev.id] = true;
+    const st = stageOf(S.age);
+    $("evStage").textContent = st.id;
+    $("evStage").style.background = st.color;
+    $("evAge").textContent = S.age + "세";
+    $("evTitle").textContent = fill(ev.title);
+    $("evText").textContent = fill(ev.text);
+    const img = $("evImage");
+    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    playSound(ev.sound);
+
+    const box = $("evChoices");
+    box.innerHTML = "";
+    box.style.display = "flex";
+    $("evResult").style.display = "none";
+    ev.choices.filter((c) => meets(c.requires)).forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.textContent = fill(c.text);
+      b.onclick = () => choose(c);
+      box.appendChild(b);
+    });
+    $("eventModal").classList.add("open");
+  }
+
+  function choose(c) {
+    // 확률 결과가 있으면 하나를 고른다
+    let out = c;
+    if (c.outcomes) {
+      let r = Math.random(), acc = 0;
+      out = c.outcomes[c.outcomes.length - 1];
+      for (const o of c.outcomes) { acc += o.chance; if (r < acc) { out = o; break; } }
+    }
+    const effects = out.effects || {};
+    const applied = {};
+    for (const k in effects) {
+      const before = S.stats[k];
+      S.stats[k] = clamp(before + effects[k]);
+      applied[k] = S.stats[k] - before;
+    }
+    for (const f of [].concat(c.flags || [], out.flags || [])) S.flags[f] = true;
+    const eduName = out.edu !== undefined ? out.edu : c.edu;
+    if (eduName) S.edu.push({ age: S.age, name: fill(eduName) });
+
+    log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    renderStats("stats", applied);
+    playSound(out.sound || c.sound);
+
+    // 결과 표시
+    $("evChoices").style.display = "none";
+    $("evResultText").textContent = fill(out.result || "");
+    $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k} ${d > 0 ? "+" : ""}${d}</span>`).join("");
+    const info = S.current.info;
+    $("evInfo").style.display = info ? "block" : "none";
+    $("evInfoText").textContent = fill(info || "");
+    $("evResult").style.display = "block";
+    $("evContinue").onclick = () => closeEvent(out.next || c.next);
+  }
+
+  function closeEvent(nextId) {
+    $("eventModal").classList.remove("open");
+    S.busy = false;
+    const next = nextId && EVENTS.find((e) => e.id === nextId);
+    if (next) return openEvent(next);
+    if (S.age >= SETTINGS.maxAge) ending();
+  }
+
+  // ── 엔딩 ──
+  function ending() {
+    S.busy = true;
+    const end = ENDINGS.find((e) => meets(e.requires)) || { title: "끝", text: "" };
+    $("endTitle").textContent = fill(end.title);
+    $("endText").textContent = fill(end.text);
+    renderStats("endStats");
+    $("eduList").innerHTML = S.edu.length
+      ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
+      : "<li>받은 교육이 없습니다.</li>";
+    show("endScreen");
+  }
+
+  // ── 시작 ──
+  document.title = SETTINGS.title;
+  $("gameTitle").textContent = SETTINGS.title;
+  $("gameSubtitle").textContent = SETTINGS.subtitle;
+  $("startBtn").onclick = start;
+  $("nameInput").onkeydown = (e) => { if (e.key === "Enter") start(); };
+  $("nextBtn").onclick = () => nextYear();
+  $("skipBtn").onclick = skipToEvent;
+  $("restartBtn").onclick = () => { show("startScreen"); $("nameInput").value = ""; };
+})();
+</script>
+</body>
+</html>
