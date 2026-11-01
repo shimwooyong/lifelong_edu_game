@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배움의 일생</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 시작 화면 -->
+  <section id="startScreen" class="screen active">
+    <div class="start-box">
+      <h1 id="gameTitle"></h1>
+      <p id="gameSubtitle" class="subtitle"></p>
+      <input id="nameInput" maxlength="8" placeholder="이름을 입력하세요 (비우면 무작위)">
+      <button id="startBtn" class="btn primary">인생 시작하기</button>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="gameScreen" class="screen">
+    <header class="top">
+      <div class="who">
+        <span id="stageTag" class="tag"></span>
+        <strong id="nameText"></strong>
+      </div>
+      <div class="age"><span id="ageText">0</span><small>세</small></div>
+    </header>
+    <div id="stats" class="stats"></div>
+    <div id="timelineBar" class="timeline-bar"></div>
+    <main id="log" class="log"></main>
+    <footer class="controls">
+      <button id="nextBtn" class="btn primary">▶ 1년 보내기</button>
+      <button id="skipBtn" class="btn">⏩ 다음 이벤트까지</button>
+    </footer>
+  </section>
+
+  <!-- 엔딩 화면 -->
+  <section id="endScreen" class="screen">
+    <div class="end-box">
+      <p class="end-label">인생의 끝에서</p>
+      <h2 id="endTitle"></h2>
+      <p id="endText" class="end-text"></p>
+      <div id="endStats" class="stats"></div>
+      <h3>나의 평생교육 이력</h3>
+      <ul id="eduList" class="edu-list"></ul>
+      <button id="restartBtn" class="btn primary">다시 태어나기</button>
+    </div>
+  </section>
+
+  <!-- 이벤트 창 -->
+  <div id="eventModal" class="modal">
+    <div class="card">
+      <div class="card-head">
+        <span id="evStage" class="tag"></span>
+        <span id="evAge" class="ev-age"></span>
+      </div>
+      <h2 id="evTitle"></h2>
+      <img id="evImage" class="ev-image" alt="">
+      <p id="evText" class="ev-text"></p>
+      <div id="evChoices" class="choices"></div>
+      <div id="evResult" class="result">
+        <p id="evResultText" class="ev-text"></p>
+        <div id="evDeltas" class="deltas"></div>
+        <div id="evInfo" class="info">
+          <strong>📚 평생교육 알아보기</strong>
+          <p id="evInfoText"></p>
+        </div>
+        <button id="evContinue" class="btn primary">계속</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 데이터: 새 스크립트 파일은 여기에 추가 -->
+  <script src="data/settings.js"></script>
+  <script src="data/stages.js"></script>
+  <script src="data/events.js"></script>
+  <script src="data/endings.js"></script>
+  <!-- 게임 엔진 -->
+  <script src="js/engine.js"></script>
+</body>
+</html>

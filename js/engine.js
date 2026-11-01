@@ -1,0 +1,225 @@
+// 게임 엔진: 데이터(data 폴더)를 읽어 게임을 진행한다
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const S = {}; // 현재 게임 상태
+  let bgm = null;
+
+  // ── 유틸 ──
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+  const stageOf = (age) => STAGES.find((s) => age >= s.from && age <= s.to) || STAGES[STAGES.length - 1];
+
+  // {이름}과 조사 처리: {이름}이(가), 은(는), 을(를), 과(와), 아(야), 으로(로)
+  function fill(text) {
+    const name = S.name || "";
+    const last = name.charCodeAt(name.length - 1);
+    const hasBatchim = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0;
+    const josa = { "이(가)": ["이", "가"], "은(는)": ["은", "는"], "을(를)": ["을", "를"],
+      "과(와)": ["과", "와"], "아(야)": ["아", "야"], "으로(로)": ["으로", "로"] };
+    return (text || "")
+      .replace(/\{이름\}(이\(가\)|은\(는\)|을\(를\)|과\(와\)|아\(야\)|으로\(로\))/g,
+        (_, j) => name + josa[j][hasBatchim ? 0 : 1])
+      .replace(/\{이름\}/g, name);
+  }
+
+  // 조건 검사: { min:{지식:50}, max:{...}, flags:[...], notFlags:[...], eduCount:3 }
+  function meets(req) {
+    if (!req) return true;
+    for (const k in req.min || {}) if (S.stats[k] < req.min[k]) return false;
+    for (const k in req.max || {}) if (S.stats[k] > req.max[k]) return false;
+    for (const f of req.flags || []) if (!S.flags[f]) return false;
+    for (const f of req.notFlags || []) if (S.flags[f]) return false;
+    if (req.eduCount && S.edu.length < req.eduCount) return false;
+    return true;
+  }
+
+  function playSound(src) {
+    if (!src) return;
+    try { new Audio(src).play(); } catch (e) {}
+  }
+
+  // ── 화면 ──
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    $(id).classList.add("active");
+  }
+
+  function renderStats(target, withFloat = {}) {
+    const box = $(target);
+    box.innerHTML = "";
+    for (const k of SETTINGS.stats) {
+      const v = S.stats[k], c = SETTINGS.statColors[k] || "#888";
+      const d = withFloat[k];
+      box.insertAdjacentHTML("beforeend", `
+        <div class="stat">
+          <div class="name">${k}<b>${v}</b></div>
+          <div class="bar"><div class="fill" style="width:${v}%;background:${c}"></div></div>
+          ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
+        </div>`);
+    }
+  }
+
+  function renderTop() {
+    const st = stageOf(S.age);
+    $("ageText").textContent = S.age;
+    $("nameText").textContent = S.name;
+    $("stageTag").textContent = st.id;
+    $("stageTag").style.background = st.color;
+    // 인생 진행 막대
+    const bar = $("timelineBar");
+    bar.innerHTML = STAGES.map((s) =>
+      `<div style="background:${S.age >= s.from ? s.color : ""}" title="${s.id}"></div>`).join("");
+  }
+
+  function log(text, type = "", age = S.age) {
+    const el = document.createElement("div");
+    el.className = "entry " + type;
+    el.innerHTML = `<span class="y">${type === "stage" ? "" : age + "세"}</span><span class="t"></span>`;
+    el.querySelector(".t").textContent = fill(text);
+    $("log").appendChild(el);
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  // ── 진행 ──
+  function start() {
+    Object.assign(S, {
+      name: $("nameInput").value.trim() || pick(SETTINGS.randomNames),
+      age: 0,
+      stats: { ...SETTINGS.startStats },
+      flags: {}, done: {}, edu: [],
+      stage: null, busy: false,
+    });
+    $("log").innerHTML = "";
+    show("gameScreen");
+    renderTop();
+    renderStats("stats");
+    S.stage = stageOf(0).id;
+    log(`── ${S.stage} ──`, "stage");
+    log("{이름}이(가) 태어났다.");
+    if (SETTINGS.bgm && !bgm) { bgm = new Audio(SETTINGS.bgm); bgm.loop = true; bgm.play().catch(() => {}); }
+  }
+
+  function findEvent() {
+    return EVENTS.find((e) => {
+      if (S.done[e.id]) return false;
+      const ageOk = e.age != null ? e.age === S.age
+        : e.ages ? S.age >= e.ages[0] && S.age <= e.ages[1] : false;
+      if (!ageOk || !meets(e.requires)) return false;
+      return e.chance == null || Math.random() < e.chance;
+    });
+  }
+
+  // 1년 진행. 이벤트가 열리면 true 반환
+  function nextYear(quiet = false) {
+    if (S.busy) return true;
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    S.age++;
+    const st = stageOf(S.age);
+    if (st.id !== S.stage) { S.stage = st.id; log(`── ${st.id} ──`, "stage"); }
+    renderTop();
+    const ev = findEvent();
+    if (ev) { openEvent(ev); return true; }
+    if (!quiet && st.lines && st.lines.length) log(pick(st.lines));
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    return false;
+  }
+
+  function skipToEvent() {
+    while (!nextYear(true)) {}
+  }
+
+  // ── 이벤트 ──
+  function openEvent(ev) {
+    S.busy = true;
+    S.current = ev;
+    S.done[ev.id] = true;
+    const st = stageOf(S.age);
+    $("evStage").textContent = st.id;
+    $("evStage").style.background = st.color;
+    $("evAge").textContent = S.age + "세";
+    $("evTitle").textContent = fill(ev.title);
+    $("evText").textContent = fill(ev.text);
+    const img = $("evImage");
+    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    playSound(ev.sound);
+
+    const box = $("evChoices");
+    box.innerHTML = "";
+    box.style.display = "flex";
+    $("evResult").style.display = "none";
+    ev.choices.filter((c) => meets(c.requires)).forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.textContent = fill(c.text);
+      b.onclick = () => choose(c);
+      box.appendChild(b);
+    });
+    $("eventModal").classList.add("open");
+  }
+
+  function choose(c) {
+    // 확률 결과가 있으면 하나를 고른다
+    let out = c;
+    if (c.outcomes) {
+      let r = Math.random(), acc = 0;
+      out = c.outcomes[c.outcomes.length - 1];
+      for (const o of c.outcomes) { acc += o.chance; if (r < acc) { out = o; break; } }
+    }
+    const effects = out.effects || {};
+    const applied = {};
+    for (const k in effects) {
+      const before = S.stats[k];
+      S.stats[k] = clamp(before + effects[k]);
+      applied[k] = S.stats[k] - before;
+    }
+    for (const f of [].concat(c.flags || [], out.flags || [])) S.flags[f] = true;
+    const eduName = out.edu !== undefined ? out.edu : c.edu;
+    if (eduName) S.edu.push({ age: S.age, name: fill(eduName) });
+
+    log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    renderStats("stats", applied);
+    playSound(out.sound || c.sound);
+
+    // 결과 표시
+    $("evChoices").style.display = "none";
+    $("evResultText").textContent = fill(out.result || "");
+    $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k} ${d > 0 ? "+" : ""}${d}</span>`).join("");
+    const info = S.current.info;
+    $("evInfo").style.display = info ? "block" : "none";
+    $("evInfoText").textContent = fill(info || "");
+    $("evResult").style.display = "block";
+    $("evContinue").onclick = () => closeEvent(out.next || c.next);
+  }
+
+  function closeEvent(nextId) {
+    $("eventModal").classList.remove("open");
+    S.busy = false;
+    const next = nextId && EVENTS.find((e) => e.id === nextId);
+    if (next) return openEvent(next);
+    if (S.age >= SETTINGS.maxAge) ending();
+  }
+
+  // ── 엔딩 ──
+  function ending() {
+    S.busy = true;
+    const end = ENDINGS.find((e) => meets(e.requires)) || { title: "끝", text: "" };
+    $("endTitle").textContent = fill(end.title);
+    $("endText").textContent = fill(end.text);
+    renderStats("endStats");
+    $("eduList").innerHTML = S.edu.length
+      ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
+      : "<li>받은 교육이 없습니다.</li>";
+    show("endScreen");
+  }
+
+  // ── 시작 ──
+  document.title = SETTINGS.title;
+  $("gameTitle").textContent = SETTINGS.title;
+  $("gameSubtitle").textContent = SETTINGS.subtitle;
+  $("startBtn").onclick = start;
+  $("nameInput").onkeydown = (e) => { if (e.key === "Enter") start(); };
+  $("nextBtn").onclick = () => nextYear();
+  $("skipBtn").onclick = skipToEvent;
+  $("restartBtn").onclick = () => { show("startScreen"); $("nameInput").value = ""; };
+})();

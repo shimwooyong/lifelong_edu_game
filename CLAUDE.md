@@ -2,6 +2,16 @@
 
 "80억분의 1"을 레퍼런스로 한 스크립트 중심 시뮬레이션 웹 게임. 주제는 "평생교육"으로, 한 가족의 일생에 평생교육 관련 교육용 이벤트를 배치한다. 세부 기획과 스크립트는 사용자가 계속 추가한다.
 
+## 구조 (빌드 없음, index.html 더블클릭으로 실행)
+- `data/` 게임 내용. 사용자 스크립트는 여기만 고친다.
+  - `settings.js` 능력치·기본값·BGM / `stages.js` 시기와 일상 문장 / `events.js` 이벤트 / `endings.js` 엔딩
+  - 새 데이터 파일을 만들면 `index.html`의 script 목록에 추가.
+- `js/engine.js` 엔진, `css/style.css` 디자인, `assets/images|sounds` 애셋.
+- 이벤트 필드: id, age 또는 ages:[min,max], chance, requires{min,max,flags,notFlags,eduCount}, title, text, image, sound, choices[{text, effects, result, edu, flags, requires, next, outcomes[{chance,effects,result,...}]}], info
+- 텍스트의 `{이름}이(가)` 등은 자동 조사 처리.
+- 사용자용 입력 양식: `스크립트_양식.md`. 미리보기: launch.json "game"(localhost:8123).
+- 사용자는 코딩 설명을 원하지 않음. 결과만 짧게 알린다.
+
 ## 토큰 절약 규칙 (모델 분리)
 - 메인 작업(기획 판단, 구조 설계, 핵심 코드 작성)은 메인 모델(Opus)이 직접 한다.
 - 단순·반복 작업은 Agent 도구로 하위 에이전트에 맡긴다. 하위 에이전트는 기본적으로 Haiku로 실행된다(`.claude/settings.json`의 `CLAUDE_CODE_SUBAGENT_MODEL`).
