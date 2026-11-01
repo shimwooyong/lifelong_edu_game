@@ -2,7 +2,7 @@
 // requires: { min: {...}, max: {...}, flags: [...], eduCount: 숫자 }
 addEnding({
   title: "평생 배움의 달인",
-  requires: { eduCount: 5 },
+  requires: { eduCount: 12 },
   text: `{이름}은(는) 인생의 모든 시기마다 새로운 것을 배웠다.
 "배움은 끝나지 않는다"는 말은 {이름}에게 그저 사실이었다.`,
 });

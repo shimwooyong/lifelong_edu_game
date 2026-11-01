@@ -78,6 +78,7 @@ EBS 무료 강의, 지역 청소년수련관·청소년문화의집의 진로체
 addEvent({
   id: "AI캠프",
   age: 22,
+  requires: { notFlags: ["고졸취업"] },
   title: "AI 활용 겨울 캠프 모집",
   image: "",
   text: `대학교 3학년 겨울방학을 앞두고 학교 게시판에 공고가 붙었다.
