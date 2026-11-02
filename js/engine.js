@@ -67,7 +67,7 @@
     box.innerHTML = "";
     const items = [
       ["자산", S.stats.자산, S.cls ? S.cls.name + " 출신" : "", withFloat.자산],
-      ["좋은 교육", goodEduCount() + "가지", "엔딩을 결정해요", withFloat.교육],
+      ["받은 교육", S.edu.length + "번", "", withFloat.교육],
     ];
     for (const [k, v, sub, d] of items) {
       box.insertAdjacentHTML("beforeend", `
@@ -130,7 +130,9 @@
   }
 
   function findEvent() {
-    return EVENTS.find((e) => {
+    // 나이가 딱 정해진 이벤트를 먼저, 그다음 무작위 이벤트
+    const fixed = EVENTS.filter((e) => e.age != null), ranged = EVENTS.filter((e) => e.age == null);
+    return [...fixed, ...ranged].find((e) => {
       if (S.done[e.id]) return false;
       const ageOk = e.age != null ? e.age === S.age
         : e.ages ? S.age >= e.ages[0] && S.age <= e.ages[1] : false;
@@ -216,9 +218,7 @@
     for (const f of [].concat(c.flags || [], out.flags || [])) S.flags[f] = true;
     const eduName = out.edu !== undefined ? out.edu : c.edu;
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
-    const before = goodEduCount();
-    if (eduName) S.edu.push({ age: S.age, name: fill(eduName), good: eduGood });
-    if (goodEduCount() > before) applied.교육 = 1;
+    if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
     log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
@@ -228,7 +228,7 @@
     $("evChoices").style.display = "none";
     $("evResultText").textContent = fill(out.result || "");
     $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
-      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "좋은 교육 +1가지" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
     const info = S.current.info;
     $("evInfo").style.display = info ? "block" : "none";
     $("evInfoText").textContent = fill(info || "");
@@ -252,7 +252,7 @@
     $("endText").textContent = fill(end.text);
     renderStats("endStats");
     $("eduList").innerHTML = S.edu.length
-      ? S.edu.map((e) => `<li class="${e.good ? "good" : "plain"}"><small>${e.age}세</small>${e.name}${e.good ? " ✓" : ""}</li>`).join("")
+      ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
       : "<li>받은 교육이 없습니다.</li>";
     show("endScreen");
   }

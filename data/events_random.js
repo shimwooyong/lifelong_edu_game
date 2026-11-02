@@ -65,7 +65,7 @@ addEvent({
 addEvent({
   id: "실직",
   ages: [30, 58],
-  chance: 0.06,
+  chance: 0.04,
   good: false,
   title: "갑작스러운 실직",
   text: `회사가 어려워져 {이름}의 부서가 없어졌다.
