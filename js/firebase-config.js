@@ -8,4 +8,4 @@ window.FIREBASE_CONFIG = {
 window.GAME_ROOT = "lifelong";
 
 // 관리자 비밀번호 (admin.html 입장용). 권한을 줄 사람에게만 알려 주세요.
-window.ADMIN_PASSWORD = "1234";
+window.ADMIN_PASSWORD = "2607";
