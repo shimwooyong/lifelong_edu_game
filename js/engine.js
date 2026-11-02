@@ -187,7 +187,8 @@
     const M = SETTINGS.mentoring;
     if (best && M && !S.mentorRolled[st.id]) {
       S.mentorRolled[st.id] = true;
-      if (S.mentorCount < M.max && Math.random() < M.chance * luck()) {
+      const p = M.chance * luck() * Math.pow(M.repeat ?? 1, S.mentorCount);
+      if (S.mentorCount < M.max && Math.random() < p) {
         S.mentorCount++;
         $("eventModal").querySelector(".card").classList.add("mentor");
         $("evTitle").textContent = M.title;
@@ -202,6 +203,11 @@
       }
     }
 
+    // 선택지 순서는 매번 섞는다
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
     const costOf = (c) => -((c.effects || {}).자산 || 0);
     // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
     const canLock = list.some((c) => costOf(c) <= S.stats.자산);
