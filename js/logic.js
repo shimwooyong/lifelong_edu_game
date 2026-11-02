@@ -64,10 +64,12 @@ const Logic = (() => {
   function addLog(G, t, k = "", who = "child") { G.log.push({ t, k, y: G.year, w: who }); }
 
   // ── 새 게임 ──
-  function newGame(childName) {
+  function newGame(childName, clsName) {
     const list = SETTINGS.startClasses;
-    let r = Math.random() * list.reduce((a, c) => a + c.chance, 0), cls = list[list.length - 1];
-    for (const c of list) { r -= c.chance; if (r < 0) { cls = c; break; } }
+    // 관리자가 정해 준 분위가 있으면 그대로, 없으면 확률대로
+    let cls = list.find((c) => c.name === clsName);
+    let r = Math.random() * list.reduce((a, c) => a + c.chance, 0);
+    if (!cls) { cls = list[list.length - 1]; for (const c of list) { r -= c.chance; if (r < 0) { cls = c; break; } } }
     const spread = 1 + (Math.random() * 2 - 1) * (SETTINGS.startSpread || 0);
     const mk = (name, age) => ({ name, age, flags: {}, done: {}, edu: [], mentorRolled: {}, mentorCount: 0 });
     const G = {

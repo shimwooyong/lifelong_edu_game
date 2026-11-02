@@ -27,18 +27,37 @@
     Net.set("", { config: { id: Date.now(), count: n }, groups });
   };
 
-  function start(g) {
+  // 아직 어느 조도 받지 않은 소득분위를 무작위로 count개 고른다 (10개를 넘으면 덜 쓰인 분위부터 다시)
+  function pickClasses(count) {
+    const gs = (root && root.groups) || {};
+    const used = {};
+    for (const g in gs) if (gs[g].game) used[gs[g].game.cls] = (used[gs[g].game.cls] || 0) + 1;
+    const names = SETTINGS.startClasses.map((c) => c.name);
+    const picks = [];
+    for (let k = 0; k < count; k++) {
+      const min = Math.min(...names.map((n) => used[n] || 0));
+      const pool = names.filter((n) => (used[n] || 0) === min);
+      const n = pool[Math.floor(Math.random() * pool.length)];
+      used[n] = (used[n] || 0) + 1;
+      picks.push(n);
+    }
+    return picks;
+  }
+
+  function start(g, clsName) {
     const names = SETTINGS.randomNames;
     Net.tx(`groups/${g}`, (grp) => {
       if (grp.status !== "waiting") return;
-      grp.game = Logic.newGame(names[Math.floor(Math.random() * names.length)]);
+      grp.game = Logic.newGame(names[Math.floor(Math.random() * names.length)], clsName);
       grp.status = "playing";
       return grp;
     });
   }
   $("startAllBtn").onclick = () => {
     const gs = (root && root.groups) || {};
-    order(gs).forEach((g) => { if (gs[g].status === "waiting" && Object.keys(gs[g].members || {}).length === 4) start(g); });
+    const ready = order(gs).filter((g) => gs[g].status === "waiting" && Object.keys(gs[g].members || {}).length === 4);
+    const cls = pickClasses(ready.length);
+    ready.forEach((g, i) => start(g, cls[i]));
   };
 
   function render() {
@@ -68,7 +87,7 @@
           .map((l) => `<li>${l.w === "parent" ? "부모" : "자녀"} ${l.w === "parent" ? l.y + SETTINGS.multi.gap : l.y}세 · ${esc(l.t)}</li>`).join("");
         body = `<div class="nums">
             <span>자녀 <b>${c.age}</b>세</span><span>부모 <b>${p.age}</b>세</span>
-            <span>자산 <b>${G.asset}</b></span>
+            <span><b>${G.cls}</b></span><span>자산 <b>${G.asset}</b></span>
             <span>자녀 좋은 교육 <b>${Logic.goodEdu(c)}</b>가지</span>
           </div>
           ${G.ended ? `<div class="pend">🏁 엔딩: <b>${esc(G.ending && G.ending.title)}</b></div>` : pend || `<div class="pend muted">다음 이벤트 대기 중</div>`}
@@ -82,7 +101,7 @@
     $("groups").querySelectorAll("[data-start]").forEach((b) => (b.onclick = () => {
       const g = b.dataset.start, n = Object.keys(gs[g].members || {}).length;
       if (n < 4 && !confirm(`${g.slice(1)}조는 ${n}명뿐이에요. 비어 있는 역할의 선택은 진행되지 않습니다. 그래도 시작할까요?`)) return;
-      start(g);
+      start(g, pickClasses(1)[0]);
     }));
   }
 })();

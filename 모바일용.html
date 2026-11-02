@@ -206,14 +206,19 @@ const SETTINGS = {
   maxAge: 80,                       // 이 나이가 되면 엔딩
   stats: ["자산"],                  // 능력치는 자산 하나
 
-  // 시작 자산: 태어난 가정의 소득분위로 정한다 (분위마다 20% 확률)
-  // 금액 비율은 통계청 가계금융복지조사의 소득 5분위별 평균 자산 비율을 따름 (3분위 = 100)
+  // 시작 자산: 태어난 가정의 소득 10분위 (혼자하기에선 분위마다 10% 확률, 조별 게임에선 조마다 서로 다른 분위 배정)
+  // 금액 비율: 통계청 가계금융복지조사 소득 5분위별 평균 자산 비율(3분위 = 100)을 10단계로 나눈 추정치
   startClasses: [
-    { name: "소득 1분위", chance: 0.2, asset: 40,  text: "넉넉하지 않은 집" },
-    { name: "소득 2분위", chance: 0.2, asset: 70,  text: "빠듯하지만 정이 많은 집" },
-    { name: "소득 3분위", chance: 0.2, asset: 100, text: "평범한 중산층 집" },
-    { name: "소득 4분위", chance: 0.2, asset: 140, text: "여유가 있는 집" },
-    { name: "소득 5분위", chance: 0.2, asset: 260, text: "부유한 집" },
+    { name: "소득 1분위",  chance: 0.1, asset: 35,  text: "형편이 몹시 어려운 집" },
+    { name: "소득 2분위",  chance: 0.1, asset: 45,  text: "넉넉하지 않은 집" },
+    { name: "소득 3분위",  chance: 0.1, asset: 60,  text: "빠듯하지만 정이 많은 집" },
+    { name: "소득 4분위",  chance: 0.1, asset: 75,  text: "아껴 쓰며 사는 집" },
+    { name: "소득 5분위",  chance: 0.1, asset: 90,  text: "평범한 서민 집" },
+    { name: "소득 6분위",  chance: 0.1, asset: 110, text: "평범한 중산층 집" },
+    { name: "소득 7분위",  chance: 0.1, asset: 125, text: "안정된 중산층 집" },
+    { name: "소득 8분위",  chance: 0.1, asset: 150, text: "여유가 있는 집" },
+    { name: "소득 9분위",  chance: 0.1, asset: 195, text: "꽤 넉넉한 집" },
+    { name: "소득 10분위", chance: 0.1, asset: 330, text: "부유한 집" },
   ],
   startSpread: 0.1,                 // 시작 자산에 ±10% 무작위 차이
 
