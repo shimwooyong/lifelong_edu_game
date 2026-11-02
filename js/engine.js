@@ -6,7 +6,23 @@
 
   // ── 유틸 ──
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const clamp = (v) => Math.max(0, Math.min(100, v));
+  const clamp = (v) => Math.max(0, Math.round(v)); // 자산은 0 아래로 내려가지 않음
+
+  // 좋은 교육 종류 수 (같은 이름은 한 번만)
+  const goodEduCount = () => new Set(S.edu.filter((e) => e.good).map((e) => e.name)).size;
+
+  // 자산에 따른 운 배율: 자산이 많을수록 좋은 일은 더 자주, 나쁜 일은 덜 자주
+  function luck() {
+    const L = SETTINGS.luck;
+    return Math.max(L.min, Math.min(L.max, Math.sqrt((S.stats.자산 || 0) / L.base)));
+  }
+  // good: true(좋은 일) / false(나쁜 일) / 없음(보통). 없으면 자산 변화로 판단
+  function toneOf(o) {
+    if (o.good === true || o.good === false) return o.good;
+    const a = (o.effects || {}).자산;
+    return a > 0 ? true : a < 0 ? false : null;
+  }
+  const weighted = (p, tone) => tone === true ? p * luck() : tone === false ? p / luck() : p;
   const stageOf = (age) => STAGES.find((s) => age >= s.from && age <= s.to) || STAGES[STAGES.length - 1];
 
   // {이름}과 조사 처리: {이름}이(가), 은(는), 을(를), 과(와), 아(야), 으로(로)
@@ -30,6 +46,8 @@
     for (const f of req.flags || []) if (!S.flags[f]) return false;
     for (const f of req.notFlags || []) if (S.flags[f]) return false;
     if (req.eduCount && S.edu.length < req.eduCount) return false;
+    if (req.goodEdu && goodEduCount() < req.goodEdu) return false;
+    if (req.maxGoodEdu != null && goodEduCount() > req.maxGoodEdu) return false;
     return true;
   }
 
@@ -47,13 +65,15 @@
   function renderStats(target, withFloat = {}) {
     const box = $(target);
     box.innerHTML = "";
-    for (const k of SETTINGS.stats) {
-      const v = S.stats[k], c = SETTINGS.statColors[k] || "#888";
-      const d = withFloat[k];
+    const items = [
+      ["자산", S.stats.자산, S.cls ? S.cls.name + " 출신" : "", withFloat.자산],
+      ["좋은 교육", goodEduCount() + "가지", "엔딩을 결정해요", withFloat.교육],
+    ];
+    for (const [k, v, sub, d] of items) {
       box.insertAdjacentHTML("beforeend", `
         <div class="stat">
           <div class="name">${k}<b>${v}</b></div>
-          <div class="bar"><div class="fill" style="width:${v}%;background:${c}"></div></div>
+          <div class="sub">${sub}</div>
           ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
         </div>`);
     }
@@ -81,11 +101,21 @@
   }
 
   // ── 진행 ──
+  // 소득분위 확률대로 태어날 가정을 고른다
+  function pickClass() {
+    const list = SETTINGS.startClasses;
+    let r = Math.random() * list.reduce((a, c) => a + c.chance, 0);
+    for (const c of list) { r -= c.chance; if (r < 0) return c; }
+    return list[list.length - 1];
+  }
+
   function start() {
+    const cls = pickClass();
+    const spread = 1 + (Math.random() * 2 - 1) * (SETTINGS.startSpread || 0);
     Object.assign(S, {
       name: $("nameInput").value.trim() || pick(SETTINGS.randomNames),
-      age: 0,
-      stats: { ...SETTINGS.startStats },
+      age: 0, cls,
+      stats: { 자산: Math.round(cls.asset * spread) },
       flags: {}, done: {}, edu: [],
       stage: null, busy: false,
     });
@@ -95,7 +125,7 @@
     renderStats("stats");
     S.stage = stageOf(0).id;
     log(`── ${S.stage} ──`, "stage");
-    log("{이름}이(가) 태어났다.");
+    log(`{이름}이(가) ${cls.text}에서 태어났다. (${cls.name}, 자산 ${S.stats.자산})`);
     if (SETTINGS.bgm && !bgm) { bgm = new Audio(SETTINGS.bgm); bgm.loop = true; bgm.play().catch(() => {}); }
   }
 
@@ -105,7 +135,7 @@
       const ageOk = e.age != null ? e.age === S.age
         : e.ages ? S.age >= e.ages[0] && S.age <= e.ages[1] : false;
       if (!ageOk || !meets(e.requires)) return false;
-      return e.chance == null || Math.random() < e.chance;
+      return e.chance == null || Math.random() < weighted(e.chance, toneOf(e));
     });
   }
 
@@ -147,11 +177,20 @@
     box.innerHTML = "";
     box.style.display = "flex";
     $("evResult").style.display = "none";
-    ev.choices.filter((c) => meets(c.requires)).forEach((c) => {
+    const costOf = (c) => -((c.effects || {}).자산 || 0);
+    const list = ev.choices.filter((c) => meets(c.requires));
+    // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
+    const canLock = list.some((c) => costOf(c) <= S.stats.자산);
+    list.forEach((c) => {
       const b = document.createElement("button");
       b.className = "btn";
+      const cost = costOf(c);
       b.textContent = fill(c.text);
-      b.onclick = () => choose(c);
+      if (canLock && cost > 0 && S.stats.자산 < cost) {
+        // 돈이 모자라면 고를 수 없다
+        b.disabled = true;
+        b.textContent += ` (자산 ${cost} 필요)`;
+      } else b.onclick = () => choose(c);
       box.appendChild(b);
     });
     $("eventModal").classList.add("open");
@@ -161,9 +200,11 @@
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
     if (c.outcomes) {
-      let r = Math.random(), acc = 0;
+      // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
+      const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
+      let r = Math.random() * ws.reduce((a, b) => a + b, 0);
       out = c.outcomes[c.outcomes.length - 1];
-      for (const o of c.outcomes) { acc += o.chance; if (r < acc) { out = o; break; } }
+      for (let i = 0; i < ws.length; i++) { r -= ws[i]; if (r < 0) { out = c.outcomes[i]; break; } }
     }
     const effects = out.effects || {};
     const applied = {};
@@ -174,7 +215,10 @@
     }
     for (const f of [].concat(c.flags || [], out.flags || [])) S.flags[f] = true;
     const eduName = out.edu !== undefined ? out.edu : c.edu;
-    if (eduName) S.edu.push({ age: S.age, name: fill(eduName) });
+    const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
+    const before = goodEduCount();
+    if (eduName) S.edu.push({ age: S.age, name: fill(eduName), good: eduGood });
+    if (goodEduCount() > before) applied.교육 = 1;
 
     log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
@@ -184,7 +228,7 @@
     $("evChoices").style.display = "none";
     $("evResultText").textContent = fill(out.result || "");
     $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
-      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k} ${d > 0 ? "+" : ""}${d}</span>`).join("");
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "좋은 교육 +1가지" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
     const info = S.current.info;
     $("evInfo").style.display = info ? "block" : "none";
     $("evInfoText").textContent = fill(info || "");
@@ -208,7 +252,7 @@
     $("endText").textContent = fill(end.text);
     renderStats("endStats");
     $("eduList").innerHTML = S.edu.length
-      ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
+      ? S.edu.map((e) => `<li class="${e.good ? "good" : "plain"}"><small>${e.age}세</small>${e.name}${e.good ? " ✓" : ""}</li>`).join("")
       : "<li>받은 교육이 없습니다.</li>";
     show("endScreen");
   }

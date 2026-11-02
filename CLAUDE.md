@@ -7,7 +7,8 @@
   - `settings.js` 능력치·기본값·BGM / `stages.js` 시기와 일상 문장 / `events.js` 이벤트 / `endings.js` 엔딩
   - 새 데이터 파일을 만들면 `index.html`의 script 목록에 추가.
 - `js/engine.js` 엔진, `css/style.css` 디자인, `assets/images|sounds` 애셋.
-- 이벤트 필드: id, age 또는 ages:[min,max], chance, requires{min,max,flags,notFlags,eduCount}, title, text, image, sound, choices[{text, effects, result, edu, flags, requires, next, outcomes[{chance,effects,result,...}]}], info
+- 이벤트 필드: id, age 또는 ages:[min,max], chance, good(true/false: 자산 가중치), requires{min,max,flags,notFlags,eduCount,goodEdu}, title, text, image, sound, choices[{text, effects, result, edu, eduGood(false=좋은 교육 아님), flags, requires, next, outcomes[{chance,good,effects,result,...}]}], info
+- 능력치는 자산 하나(시작: 소득분위 무작위). 엔딩은 좋은 교육 가짓수(goodEdu)로 결정.
 - 텍스트의 `{이름}이(가)` 등은 자동 조사 처리.
 - 사용자용 입력 양식: `스크립트_양식.md`. 미리보기: launch.json "game"(localhost:8123).
 - 사용자는 코딩 설명을 원하지 않음. 결과만 짧게 알린다.
