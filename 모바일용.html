@@ -238,6 +238,14 @@ const SETTINGS = {
   randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
 };
 
+// 조별 멀티플레이 설정
+SETTINGS.multi = {
+  gap: 30,               // 부모와 자녀의 나이 차이
+  independentAge: 30,    // 자녀가 이 나이가 되면 스스로 선택 (그 전엔 부모가 결정)
+  childEnd: 60,          // 자녀가 이 나이가 되면 게임 끝
+  endingScale: 0.9,      // 엔딩 기준(좋은 교육 가짓수)에 곱하는 값: 80년 기준 22·18·13 → 60년 기준 20·16·12
+};
+
 const STAGES = [];
 const EVENTS = [];
 const ENDINGS = [];

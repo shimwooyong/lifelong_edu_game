@@ -36,5 +36,5 @@ inline_file() {
     else
       printf '%s\n' "$line"
     fi
-  done < index.html
+  done < 혼자하기.html
 } > "$OUT"
