@@ -14,6 +14,10 @@ case "$1" in
     ;;
   push)
     bash .claude/build.sh 2>/dev/null
+    # 게임 파일이 바뀌었으면 브라우저 캐시를 무시하도록 버전 번호 갱신
+    if [ -n "$(git status --porcelain js css data)" ]; then
+      sed -i -E "s#[?]v=[0-9]+\"#?v=$(date +%s)\"#g" index.html admin.html
+    fi
     git add -A
     if ! git diff --cached --quiet; then
       git commit -q -m "자동 저장: $(date '+%Y-%m-%d %H:%M') ($(hostname))"
