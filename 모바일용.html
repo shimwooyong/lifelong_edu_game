@@ -65,6 +65,8 @@ body {
 .stat .name b { color: var(--ink); font-size: 18px; }
 .stat .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
+.card.mentor { border: 3px solid #e0a800; box-shadow: 0 0 0 6px rgba(224,168,0,.18); }
+.card.mentor h2 { color: #b07d00; }
 .edu-list li.plain { opacity: .6; }
 .stat .bar { height: 6px; background: #f0ece5; border-radius: 99px; margin-top: 6px; overflow: hidden; }
 .stat .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
@@ -155,8 +157,7 @@ body {
     <div id="timelineBar" class="timeline-bar"></div>
     <main id="log" class="log"></main>
     <footer class="controls">
-      <button id="nextBtn" class="btn primary">▶ 1년 보내기</button>
-      <button id="skipBtn" class="btn">⏩ 다음 이벤트</button>
+      <button id="skipBtn" class="btn primary">▶ 다음 이벤트</button>
     </footer>
   </section>
 
@@ -219,6 +220,17 @@ const SETTINGS = {
   // 자산이 많을수록 좋은 일이 생길 확률이 커진다
   // 배율 = (자산 ÷ 기준)의 제곱근, 최소~최대 사이로 제한
   luck: { base: 100, min: 0.5, max: 2 },
+
+  // 교육 멘토링(교수님 찬스): 시기마다 한 번, 그 시기의 '가장 좋은 선택'(mentor가 붙은 선택지)이 나올 때 확률 검사
+  // 확률 = chance × 운 배율(자산). 시기 6개 × 0.17 ≈ 한 일생에 평균 1번. 최대 max번
+  mentoring: {
+    chance: 0.17,
+    max: 3,
+    title: "🎓 교육 멘토링",
+    text: `교수님 찬스가 찾아왔다!
+교수님이 이 시기에 가장 좋은 선택을 직접 알려 주십니다.
+교수님의 설명을 들은 뒤 '다음'을 누르세요.`,
+  },
 
   bgm: "",                          // 예: "missing:sounds/bgm.mp3"
   randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
@@ -320,6 +332,8 @@ addEvent({
       text: "공공도서관 영어 그림책 프로그램에 함께 다닌다",
       effects: { 자산: -2 },
       edu: "공공도서관 영유아 그림책 프로그램",
+      mentor: { effects: { 자산: 12 }, result: `교수님 말씀대로 비싼 영어유치원 대신 도서관 그림책 프로그램을 택했다.
+아낀 원비는 {이름}의 교육 적금이 되었고, {이름}은(는) 책 읽는 즐거움을 일찍 알게 되었다.` },
       result: `주말마다 부모님과 도서관에 갔다.
 영어 그림책을 읽어 주는 선생님 목소리에 {이름}의 눈이 반짝였다.`,
     },
@@ -356,6 +370,8 @@ addEvent({
     {
       text: "청소년수련관 진로체험 프로그램에 참여한다",
       edu: "청소년수련관 진로체험 프로그램",
+      mentor: { effects: { 자산: 12 }, result: `교수님 조언대로 학원 대신 청소년수련관 진로체험에 참여했다.
+학원비를 아낀 데다, 일찍 진로를 정한 덕분에 이후 공부에 낭비가 없었다.` },
       result: `방송국, 연구소, 요리 교실을 돌아다니며 다양한 직업을 체험했다.
 {이름}은(는) 처음으로 "이런 일을 해 보고 싶다"는 생각이 들었다.`,
     },
@@ -419,6 +435,8 @@ addEvent({
       text: "국민내일배움카드로 자격증 과정을 듣는다",
       effects: { 자산: -2 },
       edu: "국민내일배움카드 직업훈련 과정",
+      mentor: { effects: { 자산: 18 }, result: `교수님이 알려 준 대로 국민내일배움카드로 훈련비를 지원받아 자격증을 땄다.
+자격증 수당과 승진이 이어지며 연봉이 크게 올랐다.` },
       result: `퇴근 후 온라인 강의를 듣고 주말엔 실습을 했다.
 쉽지 않았지만 자격증을 손에 쥔 날, 스스로가 조금 자랑스러웠다.`,
     },
@@ -446,6 +464,8 @@ addEvent({
       text: "노후 자산관리 강의를 수강한다",
       effects: { 자산: 10 },
       edu: "노후 대비 자산관리 강의",
+      mentor: { effects: { 자산: 20 }, result: `교수님 말씀대로 지인의 투자 제안을 거절하고 노후 자산관리 강의를 들었다.
+연금과 지출을 정리하자 새는 돈이 막혔고, 노후 자금이 눈에 띄게 불어났다.` },
       result: `연금, 보험, 지출 관리까지 하나씩 점검했다.
 막연한 불안이 '계획'으로 바뀌자 밤잠이 편해졌다.`,
     },
@@ -493,6 +513,8 @@ addEvent({
       text: "바리스타 자격증에 도전한다",
       effects: { 자산: 5 },
       edu: "노인복지관 바리스타 자격증 과정",
+      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 바리스타 자격증에 도전했다.
+자격증을 따고 복지관 카페에서 일하게 되어, 용돈도 벌고 매일 사람들과 웃으며 지냈다.` },
       result: `처음엔 우유 거품 하나 내기도 어려웠다.
 석 달 뒤, 복지관 카페에서 {이름}이(가) 내린 라떼에 손님이 엄지를 들었다.`,
     },
@@ -906,8 +928,12 @@ addEvent({
     { text: "교환학생 프로그램에 지원한다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: -12 }, edu: "대학 교환학생 프로그램",
       result: `한 학기를 낯선 나라에서 보냈다. 세상이 생각보다 넓다는 걸 알았다.` },
     { text: "국가장학금을 받고 학교 학습 지원 프로그램을 듣는다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: 4 }, edu: "대학 교수학습지원센터 프로그램",
+      mentor: { effects: { 자산: 15 }, result: `교수님이 알려 준 대로 국가장학금을 신청하고 학교 학습지원 프로그램을 챙겼다.
+등록금 부담이 크게 줄었고, 공부 습관도 단단해졌다.` },
       result: `글쓰기 클리닉과 학습 코칭을 받으며 대학 공부에 적응했다.` },
     { text: "회사의 일학습병행 과정에 참여한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 5 }, edu: "일학습병행 과정",
+      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 일학습병행 과정에 참여했다.
+월급을 받으며 훈련을 받고 국가 자격까지 따서, 또래보다 빨리 자리를 잡았다.` },
       result: `일하면서 체계적으로 훈련을 받고 국가 자격도 얻었다.` },
     { text: "신입사원 교육만 듣고 일에 집중한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 8 }, edu: "신입사원 직무교육",
       result: `빠르게 일을 익혔다. 월급이 차곡차곡 쌓였다.` },
@@ -1210,6 +1236,7 @@ addEnding({
       age: 0, cls,
       stats: { 자산: Math.round(cls.asset * spread) },
       flags: {}, done: {}, edu: [],
+      mentorRolled: {}, mentorCount: 0,
       stage: null, busy: false,
     });
     $("log").innerHTML = "";
@@ -1234,8 +1261,8 @@ addEnding({
     });
   }
 
-  // 1년 진행. 이벤트가 열리면 true 반환
-  function nextYear(quiet = false) {
+  // 1년 진행(화면에는 보이지 않음). 이벤트가 열리면 true 반환
+  function nextYear() {
     if (S.busy) return true;
     if (S.age >= SETTINGS.maxAge) { ending(); return true; }
     S.age++;
@@ -1244,13 +1271,12 @@ addEnding({
     renderTop();
     const ev = findEvent();
     if (ev) { openEvent(ev); return true; }
-    if (!quiet && st.lines && st.lines.length) log(pick(st.lines));
     if (S.age >= SETTINGS.maxAge) { ending(); return true; }
     return false;
   }
 
   function skipToEvent() {
-    while (!nextYear(true)) {}
+    while (!nextYear()) {}
   }
 
   // ── 이벤트 ──
@@ -1264,6 +1290,7 @@ addEnding({
     $("evAge").textContent = S.age + "세";
     $("evTitle").textContent = fill(ev.title);
     $("evText").textContent = fill(ev.text);
+    $("eventModal").querySelector(".card").classList.remove("mentor");
     const img = $("evImage");
     if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
     playSound(ev.sound);
@@ -1272,8 +1299,29 @@ addEnding({
     box.innerHTML = "";
     box.style.display = "flex";
     $("evResult").style.display = "none";
-    const costOf = (c) => -((c.effects || {}).자산 || 0);
     const list = ev.choices.filter((c) => meets(c.requires));
+
+    // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
+    const best = list.find((c) => c.mentor);
+    const M = SETTINGS.mentoring;
+    if (best && M && !S.mentorRolled[st.id]) {
+      S.mentorRolled[st.id] = true;
+      if (S.mentorCount < M.max && Math.random() < M.chance * luck()) {
+        S.mentorCount++;
+        $("eventModal").querySelector(".card").classList.add("mentor");
+        $("evTitle").textContent = M.title;
+        $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
+        const b = document.createElement("button");
+        b.className = "btn primary";
+        b.textContent = "다음 ▶";
+        b.onclick = () => choose(best, true);
+        box.appendChild(b);
+        $("eventModal").classList.add("open");
+        return;
+      }
+    }
+
+    const costOf = (c) => -((c.effects || {}).자산 || 0);
     // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
     const canLock = list.some((c) => costOf(c) <= S.stats.자산);
     list.forEach((c) => {
@@ -1291,10 +1339,15 @@ addEnding({
     $("eventModal").classList.add("open");
   }
 
-  function choose(c) {
+  function choose(c, mentored = false) {
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
-    if (c.outcomes) {
+    if (mentored) {
+      // 멘토링: 가장 좋은 선택을 한 것으로 하고 멘토링 결과를 적용
+      out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
+      $("evTitle").textContent = fill(S.current.title);
+      $("evText").textContent = `🎓 교수님의 조언에 따른 선택: "${fill(c.text)}"`;
+    } else if (c.outcomes) {
       // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
       const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
       let r = Math.random() * ws.reduce((a, b) => a + b, 0);
@@ -1313,7 +1366,7 @@ addEnding({
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
     if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
-    log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    log(`${mentored ? "🎓 교육 멘토링 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
     playSound(out.sound || c.sound);
 
@@ -1356,7 +1409,6 @@ addEnding({
   $("gameSubtitle").textContent = SETTINGS.subtitle;
   $("startBtn").onclick = start;
   $("nameInput").onkeydown = (e) => { if (e.key === "Enter") start(); };
-  $("nextBtn").onclick = () => nextYear();
   $("skipBtn").onclick = skipToEvent;
   $("restartBtn").onclick = () => { show("startScreen"); $("nameInput").value = ""; };
 })();

@@ -117,6 +117,7 @@
       age: 0, cls,
       stats: { 자산: Math.round(cls.asset * spread) },
       flags: {}, done: {}, edu: [],
+      mentorRolled: {}, mentorCount: 0,
       stage: null, busy: false,
     });
     $("log").innerHTML = "";
@@ -141,8 +142,8 @@
     });
   }
 
-  // 1년 진행. 이벤트가 열리면 true 반환
-  function nextYear(quiet = false) {
+  // 1년 진행(화면에는 보이지 않음). 이벤트가 열리면 true 반환
+  function nextYear() {
     if (S.busy) return true;
     if (S.age >= SETTINGS.maxAge) { ending(); return true; }
     S.age++;
@@ -151,13 +152,12 @@
     renderTop();
     const ev = findEvent();
     if (ev) { openEvent(ev); return true; }
-    if (!quiet && st.lines && st.lines.length) log(pick(st.lines));
     if (S.age >= SETTINGS.maxAge) { ending(); return true; }
     return false;
   }
 
   function skipToEvent() {
-    while (!nextYear(true)) {}
+    while (!nextYear()) {}
   }
 
   // ── 이벤트 ──
@@ -171,6 +171,7 @@
     $("evAge").textContent = S.age + "세";
     $("evTitle").textContent = fill(ev.title);
     $("evText").textContent = fill(ev.text);
+    $("eventModal").querySelector(".card").classList.remove("mentor");
     const img = $("evImage");
     if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
     playSound(ev.sound);
@@ -179,8 +180,29 @@
     box.innerHTML = "";
     box.style.display = "flex";
     $("evResult").style.display = "none";
-    const costOf = (c) => -((c.effects || {}).자산 || 0);
     const list = ev.choices.filter((c) => meets(c.requires));
+
+    // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
+    const best = list.find((c) => c.mentor);
+    const M = SETTINGS.mentoring;
+    if (best && M && !S.mentorRolled[st.id]) {
+      S.mentorRolled[st.id] = true;
+      if (S.mentorCount < M.max && Math.random() < M.chance * luck()) {
+        S.mentorCount++;
+        $("eventModal").querySelector(".card").classList.add("mentor");
+        $("evTitle").textContent = M.title;
+        $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
+        const b = document.createElement("button");
+        b.className = "btn primary";
+        b.textContent = "다음 ▶";
+        b.onclick = () => choose(best, true);
+        box.appendChild(b);
+        $("eventModal").classList.add("open");
+        return;
+      }
+    }
+
+    const costOf = (c) => -((c.effects || {}).자산 || 0);
     // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
     const canLock = list.some((c) => costOf(c) <= S.stats.자산);
     list.forEach((c) => {
@@ -198,10 +220,15 @@
     $("eventModal").classList.add("open");
   }
 
-  function choose(c) {
+  function choose(c, mentored = false) {
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
-    if (c.outcomes) {
+    if (mentored) {
+      // 멘토링: 가장 좋은 선택을 한 것으로 하고 멘토링 결과를 적용
+      out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
+      $("evTitle").textContent = fill(S.current.title);
+      $("evText").textContent = `🎓 교수님의 조언에 따른 선택: "${fill(c.text)}"`;
+    } else if (c.outcomes) {
       // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
       const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
       let r = Math.random() * ws.reduce((a, b) => a + b, 0);
@@ -220,7 +247,7 @@
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
     if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
-    log(`${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    log(`${mentored ? "🎓 교육 멘토링 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
     playSound(out.sound || c.sound);
 
@@ -263,7 +290,6 @@
   $("gameSubtitle").textContent = SETTINGS.subtitle;
   $("startBtn").onclick = start;
   $("nameInput").onkeydown = (e) => { if (e.key === "Enter") start(); };
-  $("nextBtn").onclick = () => nextYear();
   $("skipBtn").onclick = skipToEvent;
   $("restartBtn").onclick = () => { show("startScreen"); $("nameInput").value = ""; };
 })();

@@ -56,6 +56,8 @@ body {
 .stat .name b { color: var(--ink); font-size: 18px; }
 .stat .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
+.card.mentor { border: 3px solid #e0a800; box-shadow: 0 0 0 6px rgba(224,168,0,.18); }
+.card.mentor h2 { color: #b07d00; }
 .edu-list li.plain { opacity: .6; }
 .stat .bar { height: 6px; background: #f0ece5; border-radius: 99px; margin-top: 6px; overflow: hidden; }
 .stat .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
