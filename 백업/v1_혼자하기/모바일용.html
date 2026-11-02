@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배움의 일생</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f3ee;
+  --paper: #ffffff;
+  --ink: #2b2a28;
+  --muted: #8a857c;
+  --line: #e7e1d7;
+  --accent: #3d5afe;
+  --radius: 16px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+@supports (height: 100dvh) { body { height: 100dvh; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Noto Sans KR", system-ui, sans-serif;
+  line-height: 1.6;
+}
+.screen { display: none; height: 100%; max-width: 640px; margin: 0 auto; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* 버튼 */
+.btn {
+  font: inherit; font-weight: 500;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  padding: 12px 18px; border-radius: 12px; cursor: pointer;
+  transition: transform .1s, background .2s;
+}
+.btn:hover { background: #faf8f4; }
+.btn:active { transform: scale(.98); }
+.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.primary:hover { background: #444; }
+.btn:disabled { opacity: .4; cursor: default; }
+
+/* 시작 */
+#startScreen { justify-content: center; padding: 24px; }
+.start-box { text-align: center; display: flex; flex-direction: column; gap: 14px; }
+.start-box h1 { font-size: 44px; font-weight: 900; margin: 0; letter-spacing: -1px; }
+.subtitle { color: var(--muted); margin: 0 0 20px; }
+#nameInput {
+  font: inherit; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--line); text-align: center; background: var(--paper);
+}
+
+/* 상단 */
+.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 16px 8px; }
+.who { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #eee; }
+.age { font-size: 40px; font-weight: 900; line-height: 1; }
+.age small { font-size: 16px; font-weight: 500; margin-left: 2px; color: var(--muted); }
+
+/* 능력치 */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px 16px; }
+.stat { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; position: relative; }
+.stat .name { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+.stat .name b { color: var(--ink); font-size: 18px; }
+.stat .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.card.mentor { border: 3px solid #e0a800; box-shadow: 0 0 0 6px rgba(224,168,0,.18); }
+.card.mentor h2 { color: #b07d00; }
+.edu-list li.plain { opacity: .6; }
+.stat .bar { height: 6px; background: #f0ece5; border-radius: 99px; margin-top: 6px; overflow: hidden; }
+.stat .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.float {
+  position: absolute; right: 8px; top: -6px; font-size: 12px; font-weight: 700;
+  animation: floatUp 1.4s ease forwards; pointer-events: none;
+}
+@keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-18px); } }
+
+/* 인생 진행 막대 */
+.timeline-bar { display: flex; gap: 3px; padding: 4px 16px 8px; }
+.timeline-bar div { flex: 1; height: 4px; border-radius: 99px; background: #e4ded3; transition: background .4s; }
+
+/* 기록 */
+.log { flex: 1; overflow-y: auto; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+.entry { display: flex; gap: 12px; font-size: 15px; animation: fadeIn .4s ease; }
+.entry .y { min-width: 40px; color: var(--muted); font-size: 13px; padding-top: 2px; text-align: right; }
+.entry.stage { margin-top: 12px; font-weight: 700; }
+.entry.event .t { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+.controls { display: flex; gap: 8px; padding: 12px 16px 20px; }
+.controls .btn { flex: 1; white-space: nowrap; }
+
+/* 이벤트 창 */
+.modal {
+  position: fixed; inset: 0; background: rgba(30, 28, 24, .45);
+  display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+}
+.modal.open { display: flex; }
+.card {
+  background: var(--paper); border-radius: var(--radius); width: 100%; max-width: 520px;
+  max-height: 92vh; overflow-y: auto; padding: 22px; animation: pop .25s ease;
+}
+@keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.card-head { display: flex; justify-content: space-between; align-items: center; }
+.ev-age { color: var(--muted); font-size: 14px; }
+.card h2 { margin: 10px 0; font-size: 22px; }
+.ev-image { width: 100%; border-radius: 12px; margin-bottom: 10px; display: none; }
+.ev-text { white-space: pre-line; margin: 0 0 16px; }
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choices .btn { text-align: left; }
+.result { display: none; }
+.deltas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.deltas span { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #f3f0ea; }
+.info { background: #f2f5ff; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 14px; }
+.info p { white-space: pre-line; margin: 6px 0 0; }
+#evContinue { width: 100%; }
+
+/* 엔딩 */
+#endScreen { overflow-y: auto; }
+.end-box { padding: 32px 16px; text-align: center; }
+.end-label { color: var(--muted); margin: 0; }
+.end-box h2 { font-size: 32px; margin: 4px 0 12px; }
+.end-text { white-space: pre-line; }
+.end-box h3 { margin-top: 24px; }
+.edu-list { list-style: none; padding: 0; text-align: left; margin-bottom: 24px; }
+.edu-list li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; }
+.edu-list li small { color: var(--muted); margin-right: 8px; }
+
+@media (max-width: 420px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .start-box h1 { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+  <!-- 시작 화면 -->
+  <section id="startScreen" class="screen active">
+    <div class="start-box">
+      <h1 id="gameTitle"></h1>
+      <p id="gameSubtitle" class="subtitle"></p>
+      <input id="nameInput" maxlength="8" placeholder="이름을 입력하세요 (비우면 무작위)">
+      <button id="startBtn" class="btn primary">인생 시작하기</button>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="gameScreen" class="screen">
+    <header class="top">
+      <div class="who">
+        <span id="stageTag" class="tag"></span>
+        <strong id="nameText"></strong>
+      </div>
+      <div class="age"><span id="ageText">0</span><small>세</small></div>
+    </header>
+    <div id="stats" class="stats"></div>
+    <div id="timelineBar" class="timeline-bar"></div>
+    <main id="log" class="log"></main>
+    <footer class="controls">
+      <button id="skipBtn" class="btn primary">▶ 다음 이벤트</button>
+    </footer>
+  </section>
+
+  <!-- 엔딩 화면 -->
+  <section id="endScreen" class="screen">
+    <div class="end-box">
+      <p class="end-label">인생의 끝에서</p>
+      <h2 id="endTitle"></h2>
+      <p id="endText" class="end-text"></p>
+      <div id="endStats" class="stats"></div>
+      <h3>나의 평생교육 이력</h3>
+      <ul id="eduList" class="edu-list"></ul>
+      <button id="restartBtn" class="btn primary">다시 태어나기</button>
+    </div>
+  </section>
+
+  <!-- 이벤트 창 -->
+  <div id="eventModal" class="modal">
+    <div class="card">
+      <div class="card-head">
+        <span id="evStage" class="tag"></span>
+        <span id="evAge" class="ev-age"></span>
+      </div>
+      <h2 id="evTitle"></h2>
+      <img id="evImage" class="ev-image" alt="">
+      <p id="evText" class="ev-text"></p>
+      <div id="evChoices" class="choices"></div>
+      <div id="evResult" class="result">
+        <p id="evResultText" class="ev-text"></p>
+        <div id="evDeltas" class="deltas"></div>
+        <div id="evInfo" class="info">
+          <strong>📚 평생교육 알아보기</strong>
+          <p id="evInfoText"></p>
+        </div>
+        <button id="evContinue" class="btn primary">계속</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 데이터: 새 스크립트 파일은 여기에 추가 -->
+<script>
+// 게임 기본 설정
+const SETTINGS = {
+  title: "배움의 일생",
+  subtitle: "평생교육과 함께하는 한 사람의 80년",
+  maxAge: 80,                       // 이 나이가 되면 엔딩
+  stats: ["자산"],                  // 능력치는 자산 하나
+
+  // 시작 자산: 태어난 가정의 소득분위로 정한다 (분위마다 20% 확률)
+  // 금액 비율은 통계청 가계금융복지조사의 소득 5분위별 평균 자산 비율을 따름 (3분위 = 100)
+  startClasses: [
+    { name: "소득 1분위", chance: 0.2, asset: 40,  text: "넉넉하지 않은 집" },
+    { name: "소득 2분위", chance: 0.2, asset: 70,  text: "빠듯하지만 정이 많은 집" },
+    { name: "소득 3분위", chance: 0.2, asset: 100, text: "평범한 중산층 집" },
+    { name: "소득 4분위", chance: 0.2, asset: 140, text: "여유가 있는 집" },
+    { name: "소득 5분위", chance: 0.2, asset: 260, text: "부유한 집" },
+  ],
+  startSpread: 0.1,                 // 시작 자산에 ±10% 무작위 차이
+
+  // 자산이 많을수록 좋은 일이 생길 확률이 커진다
+  // 배율 = (자산 ÷ 기준)의 제곱근, 최소~최대 사이로 제한
+  luck: { base: 100, min: 0.5, max: 2 },
+
+  // 교육 멘토링(교수님 찬스): 시기마다 한 번, 그 시기의 '가장 좋은 선택'(mentor가 붙은 선택지)이 나올 때 확률 검사
+  // 확률 = chance × 운 배율(자산) × repeat^(이미 나온 횟수). 한 일생에 평균 약 1번, 최대 max번
+  mentoring: {
+    chance: 0.2,
+    repeat: 0.35,                   // 한 번 나온 뒤엔 다음 확률이 35%로 줄어듦 (2·3번은 드물게)
+    max: 3,
+    edge: 0.1,                      // 인생의 처음·마지막 10%(0~7세, 73~80세)에는 멘토링이 나오지 않음
+    title: "🎓 교육 멘토링",
+    text: `교수님 찬스가 찾아왔다!
+교수님이 이 시기에 가장 좋은 선택을 직접 알려 주십니다.
+교수님의 설명을 들은 뒤 '다음'을 누르세요.`,
+  },
+
+  bgm: "",                          // 예: "missing:sounds/bgm.mp3"
+  randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
+};
+
+const STAGES = [];
+const EVENTS = [];
+const ENDINGS = [];
+function addStage(s) { STAGES.push(s); }
+function addEvent(e) { EVENTS.push(e); }
+function addEnding(e) { ENDINGS.push(e); }
+</script>
+<script>
+// 인생 시기 구분
+// lines: 이벤트가 없는 해에 무작위로 나오는 한 줄 일기
+addStage({
+  id: "영유아", from: 0, to: 7, color: "#ffb3c1",
+  lines: [
+    "{이름}이(가) 처음으로 걸음마를 뗐다.",
+    "동네 놀이터가 세상의 전부였다.",
+    "그림책을 읽어 달라고 졸랐다.",
+    "감기에 걸려 며칠 동안 집에만 있었다.",
+  ],
+});
+addStage({
+  id: "청소년", from: 8, to: 19, color: "#8fd3ff",
+  lines: [
+    "새 학년, 새 친구들을 만났다.",
+    "시험 기간이라 밤늦게까지 공부했다.",
+    "친구들과 노래방에서 스트레스를 풀었다.",
+    "장래희망 칸을 비워 두었다.",
+  ],
+});
+addStage({
+  id: "대학생", from: 20, to: 26, color: "#a0e7a0",
+  lines: [
+    "수강신청 전쟁에서 살아남았다.",
+    "동아리 MT를 다녀왔다.",
+    "편의점 아르바이트로 용돈을 벌었다.",
+    "졸업 후 진로를 고민하는 밤이 늘었다.",
+  ],
+});
+addStage({
+  id: "성인", from: 27, to: 49, color: "#ffd580",
+  lines: [
+    "월요일 아침 지하철은 오늘도 꽉 찼다.",
+    "야근이 이어진 한 주였다.",
+    "오랜만에 친구들과 저녁을 먹었다.",
+    "연말 정산 결과에 웃고 울었다.",
+  ],
+});
+addStage({
+  id: "중장년", from: 50, to: 64, color: "#d4a5ff",
+  lines: [
+    "건강검진 결과표를 오래 들여다봤다.",
+    "자녀가 독립해 집이 조용해졌다.",
+    "은퇴 후의 삶을 처음으로 진지하게 생각했다.",
+    "주말 등산이 새 취미가 되었다.",
+  ],
+});
+addStage({
+  id: "노년", from: 65, to: 200, color: "#c9b79c",
+  lines: [
+    "손주가 놀러 와 집이 북적였다.",
+    "아침 산책길에 이웃과 인사를 나눴다.",
+    "오래된 사진첩을 꺼내 보았다.",
+    "복지관 게시판에서 새 프로그램 안내를 봤다.",
+  ],
+});
+</script>
+<script>
+// 교육 이벤트 목록
+// 형식 안내는 스크립트_양식.md 참고
+
+// ───────── 영유아 ─────────
+addEvent({
+  id: "영어유치원",
+  age: 5,
+  title: "영어유치원 입학 상담",
+  image: "",
+  text: `{이름}이(가) 다섯 살이 되었다.
+동네 엄마들 사이에서 "요즘은 영어유치원이 기본"이라는 말이 돈다.
+한 달 원비는 웬만한 대학 등록금 수준. 부모님은 고민에 빠졌다.`,
+  choices: [
+    {
+      text: "영어유치원에 보낸다",
+      effects: { 자산: -15 },
+      edu: "영어유치원", eduGood: false,
+      result: `{이름}은(는) 영어 노래를 곧잘 따라 부르게 되었다.
+하지만 하원 버스에서 내릴 때면 가끔 지쳐 보였다.`,
+    },
+    {
+      text: "놀이 중심의 일반 유치원에 보낸다",
+      edu: "일반 유치원(놀이 중심 누리과정)",
+      result: `{이름}은(는) 친구들과 흙장난을 하며 해가 지는 줄 몰랐다.
+"오늘은 개미집을 찾았어!" 매일 저녁 이야기가 넘쳤다.`,
+    },
+    {
+      text: "공공도서관 영어 그림책 프로그램에 함께 다닌다",
+      effects: { 자산: -2 },
+      edu: "공공도서관 영유아 그림책 프로그램",
+      mentor: { effects: { 자산: 12 }, result: `교수님 말씀대로 비싼 영어유치원 대신 도서관 그림책 프로그램을 택했다.
+아낀 원비는 {이름}의 교육 적금이 되었고, {이름}은(는) 책 읽는 즐거움을 일찍 알게 되었다.` },
+      result: `주말마다 부모님과 도서관에 갔다.
+영어 그림책을 읽어 주는 선생님 목소리에 {이름}의 눈이 반짝였다.`,
+    },
+  ],
+  info: `평생교육은 태어나는 순간부터 시작됩니다.
+전국 공공도서관과 육아종합지원센터에서는 영유아와 부모가 함께하는 독서·놀이 프로그램을 무료나 저렴한 비용으로 운영합니다.
+이 시기에는 이른 학습보다 충분한 놀이와 정서적 안정이 더 중요하다는 연구가 많습니다.`,
+});
+
+// ───────── 청소년 ─────────
+addEvent({
+  id: "대형학원",
+  age: 15,
+  title: "대형 학원의 설명회",
+  image: "",
+  text: `중학교 2학년 겨울방학.
+반 친구들 대부분이 대치동 유명 학원 '선행 종합반'에 등록했다는 소식이 들린다.
+학원 설명회에서 강사는 말했다. "지금 시작하지 않으면 늦습니다."`,
+  choices: [
+    {
+      text: "대형 학원 종합반에 등록한다",
+      effects: { 자산: -15 },
+      edu: "대형 학원 선행 종합반", eduGood: false,
+      result: `밤 10시에 끝나는 수업, 쏟아지는 숙제.
+성적은 올랐지만 {이름}은(는) 늘 잠이 부족했다.`,
+    },
+    {
+      text: "EBS 강의로 스스로 공부한다",
+      effects: { 자산: -2 },
+      edu: "EBS 온라인 강의 자기주도 학습",
+      result: `처음엔 계획대로 되지 않아 애를 먹었다.
+하지만 스스로 공부하는 방법을 익히면서 자신감이 생겼다.`,
+    },
+    {
+      text: "청소년수련관 진로체험 프로그램에 참여한다",
+      edu: "청소년수련관 진로체험 프로그램",
+      mentor: { effects: { 자산: 12 }, result: `교수님 조언대로 학원 대신 청소년수련관 진로체험에 참여했다.
+학원비를 아낀 데다, 일찍 진로를 정한 덕분에 이후 공부에 낭비가 없었다.` },
+      result: `방송국, 연구소, 요리 교실을 돌아다니며 다양한 직업을 체험했다.
+{이름}은(는) 처음으로 "이런 일을 해 보고 싶다"는 생각이 들었다.`,
+    },
+  ],
+  info: `학교 밖에도 배움의 길은 많습니다.
+EBS 무료 강의, 지역 청소년수련관·청소년문화의집의 진로체험, 학교 방과후학교 등은 사교육비 부담 없이 이용할 수 있는 대표적인 교육 기회입니다.`,
+});
+
+// ───────── 대학생 ─────────
+addEvent({
+  id: "AI캠프",
+  age: 22,
+  requires: { notFlags: ["고졸취업"] },
+  title: "AI 활용 겨울 캠프 모집",
+  image: "",
+  text: `대학교 3학년 겨울방학을 앞두고 학교 게시판에 공고가 붙었다.
+[생성형 AI 실무 활용 캠프 - 4주 과정, 수료증 발급]
+과제, 취업 준비, 코딩까지 AI로 해내는 법을 배운다고 한다.`,
+  choices: [
+    {
+      text: "4주 캠프에 참가한다",
+      edu: "대학 생성형 AI 실무 활용 캠프",
+      result: `프롬프트 작성부터 자료 분석, 간단한 자동화까지 배웠다.
+"AI를 쓰는 사람과 못 쓰는 사람의 차이"라는 강사의 말이 오래 남았다.`,
+    },
+    {
+      text: "K-MOOC 무료 온라인 강좌로 혼자 배운다",
+      edu: "K-MOOC 인공지능 기초 강좌",
+      result: `원하는 시간에 강의를 들으며 기초 개념을 익혔다.
+다만 혼자 하다 보니 중간에 몇 번 미루기도 했다.`,
+    },
+    {
+      text: "방학 동안 아르바이트에 집중한다",
+      effects: { 자산: 10 },
+      result: `통장 잔고는 든든해졌다.
+개강 후, 캠프를 다녀온 동기들이 AI로 과제를 척척 해내는 모습이 눈에 들어왔다.`,
+    },
+  ],
+  info: `K-MOOC(한국형 온라인 공개강좌)는 국내 대학의 강의를 누구나 무료로 들을 수 있는 평생학습 플랫폼입니다.
+디지털·AI 역량은 학생뿐 아니라 모든 세대에게 필요한 '새로운 기초 소양'으로 꼽힙니다.`,
+});
+
+// ───────── 성인(직장인) ─────────
+addEvent({
+  id: "직무워크숍",
+  age: 33,
+  title: "직무 역량 향상 워크숍",
+  image: "",
+  text: `입사 7년 차. 업무는 익숙해졌지만 새로운 도구와 방식이 빠르게 바뀌고 있다.
+인사팀에서 메일이 왔다. [직무별 업무능력 향상 워크숍 - 주말 이틀 과정]
+마침 국민내일배움카드로 들을 수 있는 자격증 과정도 눈에 띈다.`,
+  choices: [
+    {
+      text: "회사 워크숍에 참가한다",
+      effects: { 자산: 6 },
+      edu: "직무별 업무능력 향상 워크숍",
+      result: `다른 부서 사람들과 실제 업무 사례를 나누며 배웠다.
+몇 달 뒤 평가에서 "업무 개선 아이디어가 돋보인다"는 평을 받았다.`,
+    },
+    {
+      text: "국민내일배움카드로 자격증 과정을 듣는다",
+      effects: { 자산: -2 },
+      edu: "국민내일배움카드 직업훈련 과정",
+      mentor: { effects: { 자산: 18 }, result: `교수님이 알려 준 대로 국민내일배움카드로 훈련비를 지원받아 자격증을 땄다.
+자격증 수당과 승진이 이어지며 연봉이 크게 올랐다.` },
+      result: `퇴근 후 온라인 강의를 듣고 주말엔 실습을 했다.
+쉽지 않았지만 자격증을 손에 쥔 날, 스스로가 조금 자랑스러웠다.`,
+    },
+    {
+      text: "주말엔 쉬어야 한다. 이번엔 넘긴다",
+      result: `푹 쉬고 나니 몸은 가벼워졌다.
+하지만 새 프로그램 도입 회의에서 혼자만 용어를 못 알아들어 진땀을 뺐다.`,
+    },
+  ],
+  info: `국민내일배움카드는 재직자·구직자 등 대부분의 국민이 직업훈련비를 지원받을 수 있는 제도입니다.
+일하는 동안에도 꾸준히 배우는 것은 변화하는 일터에 적응하는 가장 확실한 방법입니다.`,
+});
+
+// ───────── 중장년 ─────────
+addEvent({
+  id: "자산관리강의",
+  age: 53,
+  title: "노후 대비 자산관리 강의",
+  image: "",
+  text: `퇴직까지 10년도 남지 않았다.
+주민센터 게시판에 [인생 2막 준비 - 노후 자산관리 무료 강의] 안내문이 붙어 있다.
+그런데 같은 날, 오랜 지인이 "확실한 투자처가 있다"며 연락을 해 왔다.`,
+  choices: [
+    {
+      text: "노후 자산관리 강의를 수강한다",
+      effects: { 자산: 10 },
+      edu: "노후 대비 자산관리 강의",
+      mentor: { effects: { 자산: 20 }, result: `교수님 말씀대로 지인의 투자 제안을 거절하고 노후 자산관리 강의를 들었다.
+연금과 지출을 정리하자 새는 돈이 막혔고, 노후 자금이 눈에 띄게 불어났다.` },
+      result: `연금, 보험, 지출 관리까지 하나씩 점검했다.
+막연한 불안이 '계획'으로 바뀌자 밤잠이 편해졌다.`,
+    },
+    {
+      text: "지인의 투자 제안을 따른다",
+      edu: null,
+      outcomes: [
+        {
+          chance: 0.3,
+          effects: { 자산: 12 },
+          result: `운 좋게 수익이 났다.
+하지만 {이름}은(는) 그게 정말 실력이었는지 확신할 수 없었다.`,
+        },
+        {
+          chance: 0.7,
+          effects: { 자산: -20 },
+          result: `"확실하다"던 투자처는 연락이 끊겼다.
+모아 둔 노후 자금의 상당 부분이 사라졌다.`,
+        },
+      ],
+    },
+    {
+      text: "중장년 인생설계 프로그램(50+센터)에 참여한다",
+      effects: { 자산: 4 },
+      edu: "50+ 중장년 인생설계 프로그램",
+      result: `재무뿐 아니라 건강, 관계, 일까지 인생 후반전을 함께 설계했다.
+비슷한 고민을 가진 동료들을 만나 마음이 든든해졌다.`,
+    },
+  ],
+  info: `국민연금공단의 노후준비서비스, 지자체의 50+(중장년) 지원센터 등에서 재무·건강·여가·대인관계를 아우르는 노후 설계 교육을 받을 수 있습니다.
+금융 지식도 평생 배워야 하는 영역이며, 충분히 알아보지 않은 투자는 노후를 크게 흔들 수 있습니다.`,
+});
+
+// ───────── 노년 ─────────
+addEvent({
+  id: "바리스타자격증",
+  age: 67,
+  title: "복지관 바리스타 자격증반",
+  image: "",
+  text: `은퇴 후 2년. 하루가 길게만 느껴진다.
+동네 노인복지관에서 [시니어 바리스타 자격증 취득반] 수강생을 모집한다.
+수료 후에는 복지관 카페에서 일할 기회도 있다고 한다.`,
+  choices: [
+    {
+      text: "바리스타 자격증에 도전한다",
+      effects: { 자산: 5 },
+      edu: "노인복지관 바리스타 자격증 과정",
+      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 바리스타 자격증에 도전했다.
+자격증을 따고 복지관 카페에서 일하게 되어, 용돈도 벌고 매일 사람들과 웃으며 지냈다.` },
+      result: `처음엔 우유 거품 하나 내기도 어려웠다.
+석 달 뒤, 복지관 카페에서 {이름}이(가) 내린 라떼에 손님이 엄지를 들었다.`,
+    },
+    {
+      text: "친구들과 노인대학 교양 강좌를 듣는다",
+      edu: "노인대학 교양 강좌",
+      result: `역사, 스마트폰 활용, 노래 교실까지.
+매주 화요일은 친구들과 만나는 즐거운 날이 되었다.`,
+    },
+    {
+      text: "새로 배우기엔 늦었다. 집에서 쉰다",
+      result: `TV 소리만 가득한 날들이 이어졌다.
+문득 '그때 해 볼 걸' 하는 생각이 들었다.`,
+    },
+  ],
+  info: `배움에 늦은 나이는 없습니다.
+노인복지관, 평생학습관, 노인일자리 및 사회활동 지원사업 등을 통해 노년기에도 새 기술을 배우고 사회에 참여할 수 있습니다.
+꾸준한 배움과 사회 활동은 인지 건강과 삶의 만족도를 높이는 데 도움이 됩니다.`,
+});
+</script>
+<script>
+// 확장 이벤트 (공교육·사교육·평생교육 + 갈림길)
+// 갈림길 플래그: 일반고 / 특목고 / 특성화고 / 대학 / 전문대 / 고졸취업 / 대학원
+
+// ───────── 영유아 ─────────
+addEvent({
+  id: "첫기관",
+  age: 2,
+  title: "어린이집에 보낼까?",
+  text: `{이름}이(가) 두 살이 되었다. 부모님 모두 일을 하고 있어 고민이 깊다.
+집 근처 국공립 어린이집은 대기 순번이 길고, 민간 어린이집은 자리가 있다.`,
+  choices: [
+    { text: "국공립 어린이집 대기를 걸고 기다린다", effects: { 자산: 2 }, edu: "국공립 어린이집(표준보육과정)",
+      result: `몇 달을 기다린 끝에 자리가 났다.
+선생님들은 다정했고, {이름}은(는) 금세 친구를 사귀었다.` },
+    { text: "바로 민간 어린이집에 보낸다", effects: { 자산: -4 }, edu: "민간 어린이집",
+      result: `조금 비싸지만 부모님은 마음 놓고 출근할 수 있었다.` },
+    { text: "할머니 댁에서 지내며 가정 보육을 한다",
+      result: `할머니의 옛날이야기와 텃밭이 {이름}의 놀이터였다.` },
+  ],
+  info: `만 0~5세 어린이집과 유치원은 국가가 보육료·유아학비를 지원합니다.
+어린이집은 표준보육과정, 유치원은 누리과정을 따르며, 3~5세는 두 곳 모두 '누리과정'을 공통으로 배웁니다.`,
+});
+
+// ───────── 청소년 ─────────
+addEvent({
+  id: "초등입학",
+  age: 8,
+  title: "초등학교 입학, 방과후엔?",
+  text: `{이름}이(가) 초등학교에 입학했다. 수업은 오후 1시면 끝난다.
+남은 오후 시간을 어떻게 보낼지 정해야 한다.`,
+  choices: [
+    { text: "학교 늘봄학교·방과후학교를 신청한다", effects: { 자산: -1 }, edu: "초등학교 늘봄·방과후학교",
+      result: `로봇 코딩, 바둑, 줄넘기 교실을 골라 들었다. 학교가 놀이터가 되었다.` },
+    { text: "학습지에 피아노·태권도 학원까지 보낸다", effects: { 자산: -8 }, edu: "학습지·예체능 학원", eduGood: false,
+      result: `하루에 학원 세 곳. 실력은 늘었지만 놀 시간이 없었다.` },
+    { text: "동네 공공도서관과 놀이터에서 논다", edu: "공공도서관 어린이 독서 프로그램",
+      result: `도서관에서 빌린 책을 놀이터 벤치에서 읽는 게 일과가 되었다.` },
+  ],
+  info: `초등학교 저학년은 '늘봄학교'를 통해 정규수업 뒤 돌봄과 맞춤형 프로그램을 이용할 수 있습니다.
+방과후학교는 학원보다 저렴한 비용으로 예체능·교과 프로그램을 제공합니다.`,
+});
+
+addEvent({
+  id: "고교선택",
+  age: 16,
+  title: "어느 고등학교로 갈까?",
+  text: `중학교 3학년 가을, 고등학교 원서를 써야 한다.
+담임선생님은 성적과 적성을 함께 보라고 조언했다.`,
+  choices: [
+    { text: "집 근처 일반고에 진학한다", edu: "일반 고등학교", flags: ["일반고"],
+      result: `익숙한 친구들과 함께 진학했다. 다양한 선택과목을 들으며 진로를 찾아가기로 했다.` },
+    { text: "특목고(과학고·외고) 입시에 도전한다", requires: { goodEdu: 3 },
+      outcomes: [
+        { chance: 0.5, good: true, edu: "특수목적 고등학교", flags: ["특목고"],
+          result: `합격이다! 하지만 전국의 수재들 사이에서 경쟁은 치열했다.` },
+        { chance: 0.5, good: false, edu: "일반 고등학교", flags: ["일반고"],
+          result: `아쉽게 불합격했다. 일반고에서 다시 마음을 다잡았다.` },
+      ] },
+    { text: "특성화고·마이스터고에서 기술을 배운다", edu: "특성화고(직업교육)", flags: ["특성화고"],
+      result: `실습실의 기계 소리가 {이름}에게는 설렘이었다. 졸업 전에 자격증도 따기로 했다.` },
+  ],
+  info: `고등학교는 일반고, 특수목적고(과학고·외고·예술고 등), 자율형사립고, 특성화고·마이스터고로 나뉩니다.
+특성화고·마이스터고는 직업교육 중심으로, 졸업 후 바로 취업하거나 '선취업 후진학'을 할 수 있습니다.`,
+});
+
+addEvent({
+  id: "진로결정",
+  age: 19,
+  title: "고3, 졸업 이후의 길",
+  text: `수능이 끝났다. 이제 인생의 첫 큰 갈림길 앞에 섰다.`,
+  choices: [
+    { text: "4년제 대학교에 진학한다", requires: { notFlags: ["특성화고"] }, effects: { 자산: -8 }, edu: "4년제 대학교", flags: ["대학"],
+      result: `합격 문자를 받은 날, 가족 모두가 축하해 주었다. 등록금 고지서는 조금 무거웠다.` },
+    { text: "재수학원에 다니며 한 번 더 도전한다", requires: { notFlags: ["특성화고"] }, effects: { 자산: -10 }, edu: "재수 종합학원", eduGood: false, flags: ["대학"],
+      result: `1년을 더 버틴 끝에 원하던 학교에 들어갔다. 쉽지 않은 1년이었다.` },
+    { text: "전문대학에서 실무를 배운다", effects: { 자산: -4 }, edu: "전문대학", flags: ["전문대"],
+      result: `2년 동안 현장 실습 위주로 배우며 일찍 진로를 정했다.` },
+    { text: "바로 취업한다", effects: { 자산: 10 }, flags: ["고졸취업"],
+      result: `또래보다 일찍 사회에 나왔다. 첫 월급으로 부모님께 내복을 사 드렸다.` },
+  ],
+  info: `고등교육 기관에는 4년제 대학, 전문대학, 방송통신대학, 사이버대학 등이 있습니다.
+바로 취업하더라도 나중에 재직자 전형, 방송통신대, 학점은행제로 언제든 학위를 이어갈 수 있습니다.`,
+});
+
+// ───────── 대학생·청년 ─────────
+addEvent({
+  id: "고졸후학위",
+  age: 23,
+  requires: { flags: ["고졸취업"] },
+  title: "일하면서 학위를?",
+  text: `입사 4년 차. 일은 손에 익었지만, 승진 심사에서 '학위'가 자꾸 발목을 잡는다.
+회사 선배가 방송통신대와 학점은행제 이야기를 해 주었다.`,
+  choices: [
+    { text: "한국방송통신대학교에 입학한다", effects: { 자산: -2 }, edu: "한국방송통신대학교", flags: ["대학"],
+      result: `퇴근 후 온라인 강의, 주말엔 출석 수업. 몇 년 뒤 학사모를 썼다.` },
+    { text: "학점은행제로 자격증과 학점을 모은다", effects: { 자산: -3 }, edu: "학점은행제", flags: ["대학"],
+      result: `업무 관련 자격증까지 학점으로 인정받아 생각보다 빨리 학위를 받았다.` },
+    { text: "지금은 일에 집중한다", effects: { 자산: 6 },
+      result: `실무 경력은 쌓였지만, 마음 한구석의 아쉬움은 남았다.` },
+  ],
+  info: `학점은행제는 학교 밖에서 쌓은 학습과 자격을 학점으로 인정받아 학위를 취득하는 제도입니다.
+한국방송통신대학교는 일과 공부를 병행하는 성인 학습자를 위한 국립 원격대학입니다.`,
+});
+
+addEvent({
+  id: "취업준비",
+  age: 25,
+  requires: { notFlags: ["고졸취업"] },
+  title: "취업 준비의 갈림길",
+  text: `졸업이 다가온다. 친구들은 저마다 다른 방법으로 취업을 준비하고 있다.`,
+  choices: [
+    { text: "공무원 시험 학원에 등록한다", edu: "공무원 시험 학원", eduGood: false, outcomes: [
+        { chance: 0.4, effects: { 자산: 5 },
+          result: `2년의 노력 끝에 합격했다. 안정적인 출발이었다.` },
+        { chance: 0.6, effects: { 자산: -8 },
+          result: `몇 번의 불합격 끝에 다른 길을 찾기로 했다. 그 시간이 헛되지 않았다고 믿기로 했다.` },
+      ] },
+    { text: "국민내일배움카드로 직무 훈련을 받는다", effects: { 자산: 3 }, edu: "국민내일배움카드 구직자 훈련",
+      result: `국비 지원으로 실무 과정을 들었고, 훈련 기관 연계로 첫 직장을 얻었다.` },
+    { text: "대학원에 진학한다", effects: { 자산: -8 }, edu: "대학원(석사)", flags: ["대학원"],
+      result: `연구실의 밤은 길었지만, 한 분야를 깊이 파는 즐거움을 알게 되었다.` },
+  ],
+  info: `구직자도 국민내일배움카드로 직업훈련비를 지원받을 수 있고, 지자체 청년센터에서는 진로·취업 상담과 교육을 무료로 제공합니다.`,
+});
+
+// ───────── 성인·직장인 ─────────
+addEvent({
+  id: "부모가되다",
+  age: 37,
+  title: "부모가 된다는 것",
+  text: `{이름}에게 아이가 생겼다. 기쁨도 잠시, 육아는 모르는 것투성이다.
+아이가 크자 주변에서는 벌써 '영어유치원' 이야기가 들려온다.`,
+  choices: [
+    { text: "가족센터 부모교육을 듣는다", edu: "가족센터 부모교육",
+      result: `또래 부모들과 고민을 나누며 '완벽한 부모'보다 '함께 자라는 부모'가 되기로 했다.` },
+    { text: "아이를 위해 일찍부터 사교육을 시작한다", effects: { 자산: -12 },
+      result: `학원비 영수증이 쌓여 갔다. {이름}은(는) 자신의 어린 시절을 떠올렸다.` },
+    { text: "육아휴직을 내고 아이와 시간을 보낸다", effects: { 자산: -5 },
+      result: `아이의 첫걸음을 직접 볼 수 있었다. 평생 기억에 남을 1년이었다.` },
+  ],
+  info: `가족센터(옛 건강가정지원센터)에서는 예비부모·부모 교육, 가족 상담 등을 무료로 운영합니다.
+부모 자신의 배움은 자녀에게 가장 좋은 교육이 되기도 합니다.`,
+});
+
+addEvent({
+  id: "경력전환",
+  age: 43,
+  title: "이대로 괜찮을까?",
+  text: `회사에 구조조정 소문이 돈다. 같은 일을 오래 해 온 {이름}은(는) 불안해졌다.`,
+  choices: [
+    { text: "야간 특수대학원에서 전문성을 키운다", effects: { 자산: -6 }, edu: "특수대학원(야간 석사)", flags: ["대학원"],
+      result: `퇴근 후 강의실에서 만난 동기들은 든든한 인맥이 되었다.` },
+    { text: "평생학습관에서 새로운 분야를 배운다", edu: "평생학습관 강좌",
+      result: `데이터 분석 기초를 배우며 '아직 배울 수 있다'는 자신감을 얻었다.` },
+    { text: "유료 온라인 강의를 몰아서 산다", outcomes: [
+        { chance: 0.4, good: true, effects: { 자산: -4 }, edu: "유료 온라인 강의", eduGood: false,
+          result: `계획을 세워 끝까지 완주했다. 업무에 바로 써먹을 수 있었다.` },
+        { chance: 0.6, effects: { 자산: -5 },
+          result: `결제만 하고 거의 듣지 못했다. 강의 목록만 늘어났다.` },
+      ] },
+  ],
+  info: `전국 시·군·구 평생학습관과 주민센터에서는 교양, 디지털, 직업 관련 강좌를 저렴하게 운영합니다.
+'늘배움(국가평생학습포털)'에서 지역별 강좌를 한 번에 찾아볼 수 있습니다.`,
+});
+
+// ───────── 중장년 ─────────
+addEvent({
+  id: "퇴직준비",
+  age: 59,
+  title: "퇴직 1년 전",
+  text: `정년이 1년 앞으로 다가왔다. 회사에서 전직 지원 프로그램 안내가 왔다.
+퇴직 후에도 일을 할지, 완전히 쉴지 아직 정하지 못했다.`,
+  choices: [
+    { text: "전직 지원 프로그램으로 재취업을 준비한다", effects: { 자산: 8 }, edu: "기업 전직 지원 서비스",
+      result: `경력을 살려 중소기업 자문역으로 일하게 되었다.` },
+    { text: "귀농·귀촌 교육을 받는다", effects: { 자산: -4 }, edu: "귀농·귀촌 교육",
+      result: `흙을 만지는 삶을 꿈꾸며 농업기술센터의 교육을 들었다.` },
+    { text: "요양보호사 자격증을 딴다", effects: { 자산: 5 }, edu: "요양보호사 자격 과정",
+      result: `누군가를 돌보는 일에서 새로운 보람을 찾았다.` },
+  ],
+  info: `1,000명 이상 기업은 50세 이상 퇴직 예정자에게 전직 지원 서비스를 제공해야 합니다.
+중장년 일자리희망센터, 농업기술센터(귀농 교육) 등에서도 인생 2막 교육을 받을 수 있습니다.`,
+});
+
+// ───────── 노년 ─────────
+addEvent({
+  id: "디지털교육",
+  age: 71,
+  title: "키오스크 앞에서",
+  text: `카페에 사람 대신 키오스크가 생겼다. 뒤에 줄 선 사람들의 눈치가 보인다.
+결국 주문을 못 하고 나왔다.`,
+  choices: [
+    { text: "복지관 스마트폰·키오스크 교실에 등록한다", edu: "디지털 역량 교육(스마트폰·키오스크)",
+      result: `이제는 영상통화로 손주 얼굴을 보고, 키오스크 주문도 척척 한다.` },
+    { text: "손주에게 하나씩 물어본다",
+      result: `손주가 귀찮아하면서도 꼼꼼히 알려 주었다. 함께 웃는 시간이 늘었다.` },
+    { text: "그냥 사람 있는 가게만 간다",
+      result: `갈 수 있는 곳이 점점 줄어드는 느낌이었다.` },
+  ],
+  info: `디지털배움터, 노인복지관, 주민센터 등에서 스마트폰·키오스크·온라인 서비스 이용법을 무료로 가르칩니다.`,
+});
+
+addEvent({
+  id: "배움나눔",
+  age: 75,
+  title: "이제는 가르치는 사람으로",
+  text: `복지관 담당자가 {이름}에게 제안했다.
+"평생 쌓아 온 경험을 아이들이나 이웃에게 나눠 주시면 어떨까요?"`,
+  choices: [
+    { text: "시니어 강사 양성 과정을 듣고 강단에 선다", requires: { goodEdu: 8 }, edu: "시니어 강사 양성 과정",
+      result: `초등학교 방과후 교실에서 옛 놀이와 삶의 지혜를 가르쳤다.
+아이들이 "선생님!" 하고 부를 때마다 가슴이 뛰었다.` },
+    { text: "성인문해교실에서 봉사한다", edu: "평생교육 자원봉사 활동",
+      result: `늦게 한글을 배우는 어르신들의 첫 편지를 함께 읽으며 눈시울이 붉어졌다.` },
+    { text: "정중히 사양한다",
+      result: `조용한 일상을 택했다. 그것도 나름의 행복이었다.` },
+  ],
+  info: `평생교육은 배우는 것뿐 아니라 '가르치고 나누는 것'까지 포함합니다.
+성인문해교육은 글을 배우지 못한 성인에게 한글과 셈하기를 가르치며, 학력 인정 과정도 운영됩니다.`,
+});
+</script>
+<script>
+// 무작위로 찾아오는 좋은 일·나쁜 일
+// good: true  → 자산이 많을수록 더 자주 생김
+// good: false → 자산이 많을수록 덜 생김 (자산이 적을수록 자주 생김)
+
+// ───────── 좋은 일 ─────────
+addEvent({
+  id: "장학멘토링",
+  ages: [10, 18],
+  chance: 0.12,
+  good: true,
+  title: "장학 멘토링 프로그램 선발",
+  text: `학교에 지역 교육재단의 안내문이 붙었다.
+[장학생 선발 - 대학생 멘토와 1:1 학습 멘토링, 장학금 지급]
+담임선생님이 {이름}에게 지원해 보라고 권했다.`,
+  choices: [
+    { text: "지원서를 낸다", edu: "지역 교육재단 장학 멘토링",
+      outcomes: [
+        { chance: 0.6, good: true, effects: { 자산: 10 }, edu: "지역 교육재단 장학 멘토링",
+          result: `장학생으로 뽑혔다. 매주 만나는 멘토 형은 공부보다 '공부하는 법'을 알려 주었다.` },
+        { chance: 0.4, good: false, edu: null,
+          result: `아쉽게 떨어졌다. 그래도 지원서를 쓰며 처음으로 꿈을 글로 적어 보았다.` },
+      ] },
+    { text: "나랑은 상관없는 일이다", result: `안내문은 며칠 뒤 다른 공지에 덮였다.` },
+  ],
+  info: `지자체 교육재단, 장학재단, 대학 사회공헌 프로그램 등에서 청소년 대상 장학금과 멘토링을 운영합니다.
+학교 교육복지사나 담임선생님을 통해 안내받을 수 있습니다.`,
+});
+
+addEvent({
+  id: "회사학습지원",
+  ages: [28, 48],
+  chance: 0.1,
+  good: true,
+  title: "회사의 학습비 지원 대상자",
+  text: `인사팀에서 연락이 왔다. 올해 '자기계발 학습비 지원' 대상자로 뽑혔다고 한다.
+어학, 자격증, 대학원 등 원하는 교육에 쓸 수 있다.`,
+  choices: [
+    { text: "외국어 과정을 듣는다", effects: { 자산: 3 }, edu: "기업 학습비 지원 외국어 과정",
+      result: `퇴근 후 주 2회 회화 수업. 해외 거래처 메일이 더 이상 두렵지 않았다.` },
+    { text: "업무 관련 자격증 과정을 듣는다", effects: { 자산: 5 }, edu: "기업 학습비 지원 자격증 과정",
+      result: `자격증 덕분에 새 프로젝트를 맡게 되었다.` },
+    { text: "바빠서 신청하지 않는다", result: `지원금은 그대로 사라졌다.` },
+  ],
+  info: `많은 기업이 직원의 교육비를 지원하며, 고용보험에 가입된 재직자는 국민내일배움카드로도 훈련비를 지원받을 수 있습니다.`,
+});
+
+// ───────── 나쁜 일 ─────────
+addEvent({
+  id: "가계위기",
+  ages: [8, 18],
+  chance: 0.08,
+  good: false,
+  title: "집안 형편이 어려워졌다",
+  text: `부모님의 가게가 문을 닫았다. 저녁 식탁의 대화가 줄었다.
+{이름}은(는) 다니던 학원을 그만둬야 할지 고민이다.`,
+  choices: [
+    { text: "학교 교육복지 지원을 신청한다", effects: { 자산: -5 }, edu: "교육급여·교육복지 지원",
+      result: `교육급여와 방과후 자유수강권을 지원받았다. 선생님이 조용히 챙겨 주셔서 고마웠다.` },
+    { text: "학원을 끊고 혼자 버틴다", effects: { 자산: -10 },
+      result: `혼자 공부하는 밤이 길었다.` },
+  ],
+  info: `기초생활수급 가정 등은 교육급여를 받을 수 있고, 학교의 교육복지 우선지원사업으로 학습·문화·심리 지원을 받을 수 있습니다.`,
+});
+
+addEvent({
+  id: "실직",
+  ages: [30, 58],
+  chance: 0.04,
+  good: false,
+  title: "갑작스러운 실직",
+  text: `회사가 어려워져 {이름}의 부서가 없어졌다.
+당장 다음 달 생활비가 걱정이다.`,
+  choices: [
+    { text: "고용센터에서 국민취업지원제도를 신청한다", effects: { 자산: -8 }, edu: "국민취업지원제도 직업훈련",
+      result: `상담사와 함께 계획을 세우고 훈련을 받았다. 반년 뒤 새 직장을 찾았다.` },
+    { text: "닥치는 대로 일자리를 구한다", effects: { 자산: -15 },
+      result: `이런저런 일을 전전하며 몇 년을 버텼다.` },
+  ],
+  info: `국민취업지원제도는 구직자에게 취업 상담, 직업훈련, 구직촉진수당을 지원합니다. 가까운 고용센터에서 신청할 수 있습니다.`,
+});
+</script>
+<script>
+// 시기별 추가 이벤트 (비어 있던 나이를 채움)
+// 고정 나이: 13, 20, 29, 47, 56, 78 / 나머지는 시기 안에서 무작위로 등장
+
+// ───────── 영유아 ─────────
+addEvent({
+  id: "육아지원센터",
+  ages: [3, 6],
+  chance: 0.2,
+  good: true,
+  title: "육아종합지원센터 놀이 프로그램",
+  text: `구청 소식지에 [육아종합지원센터 부모-자녀 놀이 교실] 안내가 실렸다.
+선착순 무료라고 한다.`,
+  choices: [
+    { text: "신청해서 함께 다닌다", edu: "육아종합지원센터 놀이 프로그램",
+      result: `블록, 물감, 모래 놀이. {이름}은(는) 낯선 친구와도 금세 어울렸다.` },
+    { text: "바빠서 넘긴다", result: `안내지는 냉장고 문에 붙은 채 빛이 바랬다.` },
+  ],
+  info: `육아종합지원센터는 시·군·구마다 있으며, 장난감 대여, 부모-자녀 놀이 프로그램, 육아 상담을 무료나 적은 비용으로 제공합니다.`,
+});
+
+// ───────── 청소년 ─────────
+addEvent({
+  id: "자유학기",
+  age: 13,
+  title: "중학교 1학년, 시험 없는 한 학기",
+  text: `중학교에 입학했다. 1학년 한 학기는 지필 시험 대신 진로 탐색과 체험 활동을 한다.
+친구들 사이에서는 "이때 선행을 해 둬야 한다"는 말도 돈다.`,
+  choices: [
+    { text: "진로 탐색 활동에 푹 빠진다", edu: "중학교 자유학기제 진로 탐색",
+      result: `직업인 특강, 메이커 수업, 지역 기관 견학. {이름}은(는) 좋아하는 것이 무엇인지 조금 알게 되었다.` },
+    { text: "학교 동아리를 직접 만든다", edu: "학교 자율 동아리 활동",
+      result: `친구들과 영상 동아리를 만들었다. 서툴지만 첫 작품을 학교 축제에서 틀었다.` },
+    { text: "이 시기에 학원 선행을 몰아서 한다", effects: { 자산: -6 }, edu: "중학 선행학습 학원", eduGood: false,
+      result: `고등학교 수학 진도를 미리 나갔다. 체험 활동 시간엔 졸기 일쑤였다.` },
+  ],
+  info: `중학교 자유학기제는 한 학기 동안 지필 시험 부담을 줄이고 진로 탐색, 주제 선택, 동아리, 예술·체육 활동을 중심으로 운영됩니다.`,
+});
+
+addEvent({
+  id: "영재교육원",
+  ages: [10, 14],
+  chance: 0.15,
+  good: true,
+  title: "교육청 영재교육원 모집",
+  text: `학교에 [교육청 영재교육원 신입생 모집] 공문이 왔다.
+담임선생님이 관찰 추천을 해 주겠다고 했다.`,
+  choices: [
+    { text: "지원해 본다", outcomes: [
+        { chance: 0.5, good: true, edu: "교육청 영재교육원",
+          result: `합격했다! 토요일마다 다른 학교 친구들과 탐구 프로젝트를 했다.` },
+        { chance: 0.5, good: false,
+          result: `떨어졌다. 그래도 지원서에 쓴 탐구 계획은 혼자서라도 해 보기로 했다.` },
+      ] },
+    { text: "부담스러워 사양한다", result: `평소처럼 지냈다.` },
+  ],
+  info: `교육청과 대학 부설 영재교육원은 무료로 운영되며, 교사 관찰·추천을 통해 선발합니다. 사교육 없이도 도전할 수 있는 공교육 프로그램입니다.`,
+});
+
+addEvent({
+  id: "학업중단위기",
+  ages: [14, 18],
+  chance: 0.06,
+  good: false,
+  title: "학교가 버거워졌다",
+  text: `몇 달째 학교 가는 길이 무겁다. 친구 관계도, 수업도 모두 힘들다.
+{이름}은(는) 학교를 그만두고 싶다는 생각을 처음 입 밖에 냈다.`,
+  choices: [
+    { text: "학교 Wee클래스에서 상담을 받는다", edu: "학교 Wee클래스 상담",
+      result: `상담 선생님과 매주 이야기를 나눴다. 조금씩 학교가 다시 견딜 만해졌다.` },
+    { text: "학교를 나와 꿈드림센터에서 검정고시를 준비한다", effects: { 자산: -3 }, edu: "학교 밖 청소년 지원센터(꿈드림)·검정고시",
+      result: `학교 밖에서도 배움은 이어졌다. 이듬해 검정고시에 합격했다.` },
+    { text: "아무에게도 말하지 않고 버틴다", effects: { 자산: -2 },
+      result: `혼자 버틴 시간은 길고 외로웠다.` },
+  ],
+  info: `학교 안에는 Wee클래스(상담실), 학교 밖에는 학교 밖 청소년 지원센터 '꿈드림'이 있습니다.
+꿈드림에서는 검정고시, 직업 체험, 상담을 무료로 지원합니다.`,
+});
+
+// ───────── 대학생·청년 ─────────
+addEvent({
+  id: "스무살",
+  age: 20,
+  title: "스무 살의 첫해",
+  text: `{이름}은(는) 스무 살이 되었다. 새로운 생활이 시작됐다.`,
+  choices: [
+    { text: "교환학생 프로그램에 지원한다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: -12 }, edu: "대학 교환학생 프로그램",
+      result: `한 학기를 낯선 나라에서 보냈다. 세상이 생각보다 넓다는 걸 알았다.` },
+    { text: "국가장학금을 받고 학교 학습 지원 프로그램을 듣는다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: 4 }, edu: "대학 교수학습지원센터 프로그램",
+      mentor: { effects: { 자산: 15 }, result: `교수님이 알려 준 대로 국가장학금을 신청하고 학교 학습지원 프로그램을 챙겼다.
+등록금 부담이 크게 줄었고, 공부 습관도 단단해졌다.` },
+      result: `글쓰기 클리닉과 학습 코칭을 받으며 대학 공부에 적응했다.` },
+    { text: "회사의 일학습병행 과정에 참여한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 5 }, edu: "일학습병행 과정",
+      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 일학습병행 과정에 참여했다.
+월급을 받으며 훈련을 받고 국가 자격까지 따서, 또래보다 빨리 자리를 잡았다.` },
+      result: `일하면서 체계적으로 훈련을 받고 국가 자격도 얻었다.` },
+    { text: "신입사원 교육만 듣고 일에 집중한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 8 }, edu: "신입사원 직무교육",
+      result: `빠르게 일을 익혔다. 월급이 차곡차곡 쌓였다.` },
+    { text: "아르바이트로 돈을 모은다", effects: { 자산: 6 },
+      result: `편의점, 카페, 물류센터. 통장은 두툼해졌지만 몸은 늘 피곤했다.` },
+  ],
+  info: `국가장학금은 소득 수준에 따라 대학 등록금을 지원합니다.
+일학습병행은 기업에 취업한 청년이 일하면서 체계적인 훈련을 받고 국가 자격까지 얻을 수 있는 제도입니다.`,
+});
+
+addEvent({
+  id: "청년해외연수",
+  ages: [21, 29],
+  chance: 0.1,
+  good: true,
+  title: "청년 해외 연수 기회",
+  text: `청년센터에서 [해외 취업 연수 지원 프로그램] 참가자를 모집한다.
+어학과 직무 교육, 현지 인턴까지 연결해 준다고 한다.`,
+  choices: [
+    { text: "지원해서 다녀온다", effects: { 자산: -4 }, edu: "청년 해외 취업 연수 프로그램",
+      result: `낯선 도시에서 6개월을 버텼다. 돌아온 {이름}의 이력서는 한 줄이 더 길어졌다.` },
+    { text: "국내에서 기회를 찾는다", result: `익숙한 곳에서 차근차근 준비하기로 했다.` },
+  ],
+  info: `정부와 지자체는 청년의 해외 취업·연수, 국내 직무 교육을 다양하게 지원합니다. 지역 청년센터나 '온통청년' 누리집에서 찾아볼 수 있습니다.`,
+});
+
+// ───────── 성인 ─────────
+addEvent({
+  id: "이직고민",
+  age: 29,
+  title: "첫 직장 몇 년 차, 이대로 괜찮을까",
+  text: `일은 손에 익었지만 앞으로가 막막하다.
+동기 중 몇은 이직 준비를, 몇은 퇴근 후 공부를 시작했다.`,
+  choices: [
+    { text: "사이버대학에 편입해 새 분야를 공부한다", effects: { 자산: -5 }, edu: "사이버대학 편입",
+      result: `밤마다 강의를 들었다. 3년 뒤 {이름}은(는) 새 전공으로 일하게 되었다.` },
+    { text: "회사 사내 교육 과정을 꼼꼼히 챙긴다", effects: { 자산: 4 }, edu: "사내 직무 교육 과정",
+      result: `사내 강의와 멘토링을 성실히 들었더니 승진 심사에서 좋은 점수를 받았다.` },
+    { text: "비싼 이직 컨설팅 학원에 등록한다", effects: { 자산: -8 }, edu: "사설 이직 컨설팅 학원", eduGood: false,
+      result: `자기소개서는 매끈해졌지만, 정작 무엇을 하고 싶은지는 여전히 몰랐다.` },
+    { text: "지금은 돈을 모을 때다", effects: { 자산: 8 },
+      result: `저축이 늘었다. 고민은 잠시 미뤄 두었다.` },
+  ],
+  info: `사이버대학과 한국방송통신대학교는 직장인이 일하면서 학위를 받을 수 있는 대표적인 원격 고등교육 기관입니다.`,
+});
+
+addEvent({
+  id: "건강이상",
+  ages: [35, 49],
+  chance: 0.06,
+  good: false,
+  title: "건강검진의 빨간 글씨",
+  text: `건강검진 결과표에 '재검 필요'라는 글씨가 찍혀 나왔다.
+의사는 생활 습관을 바꾸지 않으면 큰일 난다고 경고했다.`,
+  choices: [
+    { text: "보건소 건강생활 교육 프로그램에 등록한다", effects: { 자산: -3 }, edu: "보건소 건강생활 실천 교육",
+      result: `식단과 운동법을 배우고 꾸준히 실천했다. 1년 뒤 재검 결과는 정상이었다.` },
+    { text: "병원 치료만 받는다", effects: { 자산: -10 },
+      result: `약을 먹으며 버텼다. 병원비가 꽤 들었다.` },
+  ],
+  info: `보건소와 국민건강보험공단은 금연, 영양, 운동, 만성질환 관리 교육을 무료로 운영합니다. 건강도 배워서 지키는 것입니다.`,
+});
+
+addEvent({
+  id: "학습동아리",
+  age: 47,
+  title: "동네 학습 동아리 모집",
+  text: `아이들이 크고 나니 저녁 시간이 조금 생겼다.
+주민센터 게시판에 [주민 학습 동아리 회원 모집 - 책 읽기, 사진, 마을 기록] 공고가 붙었다.`,
+  choices: [
+    { text: "책 읽기 동아리에 들어간다", edu: "주민 학습 동아리(독서)",
+      result: `한 달에 한 권. 이웃들과 책 이야기를 나누는 저녁이 기다려졌다.` },
+    { text: "마을 기록 동아리에서 동네 역사를 정리한다", edu: "마을 기록 학습 동아리",
+      result: `동네 어르신들의 이야기를 녹음하고 사진을 모아 작은 전시를 열었다.` },
+    { text: "부업을 시작한다", effects: { 자산: 6 },
+      result: `저녁마다 일을 더 했다. 수입은 늘었지만 쉴 틈이 없었다.` },
+  ],
+  info: `평생학습 동아리는 주민 스스로 모여 배우고 나누는 모임입니다. 많은 지자체 평생학습관이 동아리 활동비와 공간을 지원합니다.`,
+});
+
+// ───────── 중장년 ─────────
+addEvent({
+  id: "늦깎이공부",
+  age: 56,
+  title: "다시 공부하고 싶다",
+  text: `젊을 때 하고 싶던 공부가 문득 떠올랐다.
+대학 평생교육원 안내 책자를 한참 들여다봤다.`,
+  choices: [
+    { text: "대학 평생교육원 인문학 강좌를 듣는다", effects: { 자산: -3 }, edu: "대학 평생교육원 인문학 강좌",
+      result: `역사와 철학 강의를 들으며 오랜만에 가슴이 뛰었다.` },
+    { text: "방송통신대학교에 늦깎이 입학한다", effects: { 자산: -5 }, edu: "방송통신대학교 늦깎이 입학",
+      result: `자녀보다 늦게 대학생이 되었다. 시험 기간엔 온 가족이 응원했다.` },
+    { text: "이 나이에 무슨 공부냐며 접는다",
+      result: `책자는 서랍 속으로 들어갔다.` },
+  ],
+  info: `대학 부설 평생교육원은 일반 성인에게 교양·자격 강좌를 열고, 일부 과정은 학점은행제 학점으로도 인정됩니다.`,
+});
+
+addEvent({
+  id: "신중년일자리",
+  ages: [50, 64],
+  chance: 0.1,
+  good: true,
+  title: "신중년 사회공헌 활동 제안",
+  text: `고용센터에서 연락이 왔다. {이름}의 경력을 살려 비영리 단체를 돕는
+[신중년 사회공헌 활동] 참여자를 찾는다고 한다. 사전 교육 후 활동비도 지원된다.`,
+  choices: [
+    { text: "사전 교육을 받고 참여한다", effects: { 자산: 5 }, edu: "신중년 사회공헌 활동 사전 교육",
+      result: `작은 사회적기업의 회계를 도왔다. 내 경험이 누군가에게 쓸모 있다는 게 기뻤다.` },
+    { text: "정중히 거절한다", result: `제안은 다른 사람에게 돌아갔다.` },
+  ],
+  info: `신중년 사회공헌 활동 지원사업은 만 50~70세의 경력을 비영리 단체 등에 연결하고 활동 실비를 지원합니다.`,
+});
+
+// ───────── 노년 ─────────
+addEvent({
+  id: "금융사기",
+  ages: [65, 79],
+  chance: 0.06,
+  good: false,
+  title: "수상한 전화 한 통",
+  text: `"아드님이 사고를 당했습니다. 지금 바로 합의금을 보내셔야 합니다."
+떨리는 목소리로 전화를 받던 {이름}은(는) 문득 얼마 전 들은 이야기가 떠올랐다.`,
+  choices: [
+    { text: "경로당 금융사기 예방 교육에서 배운 대로 전화를 끊고 확인한다", edu: "노인 금융사기 예방 교육",
+      result: `아들에게 직접 전화를 걸었다. 아들은 회사에서 멀쩡히 일하고 있었다.` },
+    { text: "일단 돈을 보낸다", outcomes: [
+        { chance: 0.3, good: true,
+          result: `송금 직전 은행 직원이 이상하다며 막아 주었다.` },
+        { chance: 0.7, effects: { 자산: -20 },
+          result: `보이스피싱이었다. 평생 모은 돈의 일부가 한순간에 사라졌다.` },
+      ] },
+  ],
+  info: `금융감독원과 지자체는 어르신 대상 금융사기 예방 교육을 운영합니다.
+가족의 사고, 수사기관 사칭 전화를 받으면 먼저 끊고 직접 확인하는 것이 가장 확실한 예방법입니다.`,
+});
+
+addEvent({
+  id: "자서전",
+  age: 78,
+  title: "내 인생을 글로 남긴다면",
+  text: `평생학습관에서 [어르신 자서전 쓰기 교실]이 열린다.
+완성된 글은 작은 책으로 엮어 준다고 한다.`,
+  choices: [
+    { text: "자서전 쓰기 교실에 참여한다", edu: "평생학습관 자서전 쓰기 교실",
+      result: `한 문장씩 기억을 꺼내 적었다. 책을 받아 든 손주가 밤새 읽었다며 웃었다.` },
+    { text: "손주에게 이야기로 들려준다",
+      result: `손주는 고개를 끄덕이며 들었다. 이야기는 마음속에 남았다.` },
+  ],
+  info: `평생학습관과 노인복지관에서는 자서전 쓰기, 생애 기록, 회고 프로그램을 운영합니다. 삶을 돌아보는 글쓰기도 훌륭한 노년기 배움입니다.`,
+});
+</script>
+<script>
+// 엔딩 목록: 위에서부터 조건을 확인해 처음 맞는 엔딩이 나온다
+// 엔딩은 자산이 아니라 '좋은 교육을 몇 가지 경험했는지'(goodEdu)로 정해진다
+// 참고: 무작위로 고르면 보통 11~23가지, 교육을 꾸준히 고르면 21~26가지
+addEnding({
+  title: "평생 배움의 달인",
+  requires: { goodEdu: 22 },
+  text: `{이름}은(는) 인생의 모든 시기마다 새로운 것을 배웠다.
+"배움은 끝나지 않는다"는 말은 {이름}에게 그저 사실이었다.`,
+});
+addEnding({
+  title: "배우며 자란 삶",
+  requires: { goodEdu: 18 },
+  text: `넘어질 때마다 배움이 {이름}을(를) 다시 일으켜 세웠다.
+주변 사람들은 고민이 생기면 {이름}을(를) 찾아왔다.`,
+});
+addEnding({
+  title: "소박한 배움의 길",
+  requires: { goodEdu: 13 },
+  text: `대단한 공부는 아니었지만, 필요할 때마다 조금씩 배워 나갔다.
+그 작은 배움들이 모여 {이름}의 삶이 되었다.`,
+});
+addEnding({
+  title: "아쉬움이 남는 삶",
+  requires: {},
+  text: `돌아보면 놓친 배움의 기회들이 떠오른다.
+그래도 {이름}은(는) 손주에게 말했다. "배우는 데는 늦은 때가 없단다."`,
+});
+</script>
+  <!-- 게임 엔진 -->
+<script>
+// 게임 엔진: 데이터(data 폴더)를 읽어 게임을 진행한다
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const S = {}; // 현재 게임 상태
+  let bgm = null;
+
+  // ── 유틸 ──
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v) => Math.max(0, Math.round(v)); // 자산은 0 아래로 내려가지 않음
+
+  // 좋은 교육 종류 수 (같은 이름은 한 번만)
+  const goodEduCount = () => new Set(S.edu.filter((e) => e.good).map((e) => e.name)).size;
+
+  // 자산에 따른 운 배율: 자산이 많을수록 좋은 일은 더 자주, 나쁜 일은 덜 자주
+  function luck() {
+    const L = SETTINGS.luck;
+    return Math.max(L.min, Math.min(L.max, Math.sqrt((S.stats.자산 || 0) / L.base)));
+  }
+  // good: true(좋은 일) / false(나쁜 일) / 없음(보통). 없으면 자산 변화로 판단
+  function toneOf(o) {
+    if (o.good === true || o.good === false) return o.good;
+    const a = (o.effects || {}).자산;
+    return a > 0 ? true : a < 0 ? false : null;
+  }
+  const weighted = (p, tone) => tone === true ? p * luck() : tone === false ? p / luck() : p;
+  const stageOf = (age) => STAGES.find((s) => age >= s.from && age <= s.to) || STAGES[STAGES.length - 1];
+
+  // {이름}과 조사 처리: {이름}이(가), 은(는), 을(를), 과(와), 아(야), 으로(로)
+  function fill(text) {
+    const name = S.name || "";
+    const last = name.charCodeAt(name.length - 1);
+    const hasBatchim = last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0;
+    const josa = { "이(가)": ["이", "가"], "은(는)": ["은", "는"], "을(를)": ["을", "를"],
+      "과(와)": ["과", "와"], "아(야)": ["아", "야"], "으로(로)": ["으로", "로"] };
+    return (text || "")
+      .replace(/\{이름\}(이\(가\)|은\(는\)|을\(를\)|과\(와\)|아\(야\)|으로\(로\))/g,
+        (_, j) => name + josa[j][hasBatchim ? 0 : 1])
+      .replace(/\{이름\}/g, name);
+  }
+
+  // 조건 검사: { min:{지식:50}, max:{...}, flags:[...], notFlags:[...], eduCount:3 }
+  function meets(req) {
+    if (!req) return true;
+    for (const k in req.min || {}) if (S.stats[k] < req.min[k]) return false;
+    for (const k in req.max || {}) if (S.stats[k] > req.max[k]) return false;
+    for (const f of req.flags || []) if (!S.flags[f]) return false;
+    for (const f of req.notFlags || []) if (S.flags[f]) return false;
+    if (req.eduCount && S.edu.length < req.eduCount) return false;
+    if (req.goodEdu && goodEduCount() < req.goodEdu) return false;
+    if (req.maxGoodEdu != null && goodEduCount() > req.maxGoodEdu) return false;
+    return true;
+  }
+
+  function playSound(src) {
+    if (!src) return;
+    try { new Audio(src).play(); } catch (e) {}
+  }
+
+  // ── 화면 ──
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    $(id).classList.add("active");
+  }
+
+  function renderStats(target, withFloat = {}) {
+    const box = $(target);
+    box.innerHTML = "";
+    const items = [
+      ["자산", S.stats.자산, S.cls ? S.cls.name + " 출신" : "", withFloat.자산],
+      ["받은 교육", S.edu.length + "번", "", withFloat.교육],
+    ];
+    for (const [k, v, sub, d] of items) {
+      box.insertAdjacentHTML("beforeend", `
+        <div class="stat">
+          <div class="name">${k}<b>${v}</b></div>
+          <div class="sub">${sub}</div>
+          ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
+        </div>`);
+    }
+  }
+
+  function renderTop() {
+    const st = stageOf(S.age);
+    $("ageText").textContent = S.age;
+    $("nameText").textContent = S.name;
+    $("stageTag").textContent = st.id;
+    $("stageTag").style.background = st.color;
+    // 인생 진행 막대
+    const bar = $("timelineBar");
+    bar.innerHTML = STAGES.map((s) =>
+      `<div style="background:${S.age >= s.from ? s.color : ""}" title="${s.id}"></div>`).join("");
+  }
+
+  function log(text, type = "", age = S.age) {
+    const el = document.createElement("div");
+    el.className = "entry " + type;
+    el.innerHTML = `<span class="y">${type === "stage" ? "" : age + "세"}</span><span class="t"></span>`;
+    el.querySelector(".t").textContent = fill(text);
+    $("log").appendChild(el);
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  // ── 진행 ──
+  // 소득분위 확률대로 태어날 가정을 고른다
+  function pickClass() {
+    const list = SETTINGS.startClasses;
+    let r = Math.random() * list.reduce((a, c) => a + c.chance, 0);
+    for (const c of list) { r -= c.chance; if (r < 0) return c; }
+    return list[list.length - 1];
+  }
+
+  function start() {
+    const cls = pickClass();
+    const spread = 1 + (Math.random() * 2 - 1) * (SETTINGS.startSpread || 0);
+    Object.assign(S, {
+      name: $("nameInput").value.trim() || pick(SETTINGS.randomNames),
+      age: 0, cls,
+      stats: { 자산: Math.round(cls.asset * spread) },
+      flags: {}, done: {}, edu: [],
+      mentorRolled: {}, mentorCount: 0,
+      stage: null, busy: false,
+    });
+    $("log").innerHTML = "";
+    show("gameScreen");
+    renderTop();
+    renderStats("stats");
+    S.stage = stageOf(0).id;
+    log(`── ${S.stage} ──`, "stage");
+    log(`{이름}이(가) ${cls.text}에서 태어났다. (${cls.name}, 자산 ${S.stats.자산})`);
+    if (SETTINGS.bgm && !bgm) { bgm = new Audio(SETTINGS.bgm); bgm.loop = true; bgm.play().catch(() => {}); }
+  }
+
+  function findEvent() {
+    // 나이가 딱 정해진 이벤트를 먼저, 그다음 무작위 이벤트
+    const fixed = EVENTS.filter((e) => e.age != null), ranged = EVENTS.filter((e) => e.age == null);
+    return [...fixed, ...ranged].find((e) => {
+      if (S.done[e.id]) return false;
+      const ageOk = e.age != null ? e.age === S.age
+        : e.ages ? S.age >= e.ages[0] && S.age <= e.ages[1] : false;
+      if (!ageOk || !meets(e.requires)) return false;
+      return e.chance == null || Math.random() < weighted(e.chance, toneOf(e));
+    });
+  }
+
+  // 1년 진행(화면에는 보이지 않음). 이벤트가 열리면 true 반환
+  function nextYear() {
+    if (S.busy) return true;
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    S.age++;
+    const st = stageOf(S.age);
+    if (st.id !== S.stage) { S.stage = st.id; log(`── ${st.id} ──`, "stage"); }
+    renderTop();
+    const ev = findEvent();
+    if (ev) { openEvent(ev); return true; }
+    if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    return false;
+  }
+
+  function skipToEvent() {
+    while (!nextYear()) {}
+  }
+
+  // ── 이벤트 ──
+  function openEvent(ev) {
+    S.busy = true;
+    S.current = ev;
+    S.done[ev.id] = true;
+    const st = stageOf(S.age);
+    $("evStage").textContent = st.id;
+    $("evStage").style.background = st.color;
+    $("evAge").textContent = S.age + "세";
+    $("evTitle").textContent = fill(ev.title);
+    $("evText").textContent = fill(ev.text);
+    $("eventModal").querySelector(".card").classList.remove("mentor");
+    const img = $("evImage");
+    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    playSound(ev.sound);
+
+    const box = $("evChoices");
+    box.innerHTML = "";
+    box.style.display = "flex";
+    $("evResult").style.display = "none";
+    const list = ev.choices.filter((c) => meets(c.requires));
+
+    // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
+    const best = list.find((c) => c.mentor);
+    const M = SETTINGS.mentoring;
+    const edge = SETTINGS.maxAge * (M?.edge ?? 0); // 인생 양끝 구간에선 멘토링 없음
+    if (best && M && S.age >= edge && S.age <= SETTINGS.maxAge - edge && !S.mentorRolled[st.id]) {
+      S.mentorRolled[st.id] = true;
+      const p = M.chance * luck() * Math.pow(M.repeat ?? 1, S.mentorCount);
+      if (S.mentorCount < M.max && Math.random() < p) {
+        S.mentorCount++;
+        $("eventModal").querySelector(".card").classList.add("mentor");
+        $("evTitle").textContent = M.title;
+        $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
+        const b = document.createElement("button");
+        b.className = "btn primary";
+        b.textContent = "다음 ▶";
+        b.onclick = () => choose(best, true);
+        box.appendChild(b);
+        $("eventModal").classList.add("open");
+        return;
+      }
+    }
+
+    // 선택지 순서는 매번 섞는다
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    const costOf = (c) => -((c.effects || {}).자산 || 0);
+    // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
+    const canLock = list.some((c) => costOf(c) <= S.stats.자산);
+    list.forEach((c) => {
+      const b = document.createElement("button");
+      b.className = "btn";
+      const cost = costOf(c);
+      b.textContent = fill(c.text);
+      if (canLock && cost > 0 && S.stats.자산 < cost) {
+        // 돈이 모자라면 고를 수 없다
+        b.disabled = true;
+        b.textContent += ` (자산 ${cost} 필요)`;
+      } else b.onclick = () => choose(c);
+      box.appendChild(b);
+    });
+    $("eventModal").classList.add("open");
+  }
+
+  function choose(c, mentored = false) {
+    // 확률 결과가 있으면 하나를 고른다
+    let out = c;
+    if (mentored) {
+      // 멘토링: 가장 좋은 선택을 한 것으로 하고 멘토링 결과를 적용
+      out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
+      $("evTitle").textContent = fill(S.current.title);
+      $("evText").textContent = `🎓 교수님의 조언에 따른 선택: "${fill(c.text)}"`;
+    } else if (c.outcomes) {
+      // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
+      const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
+      let r = Math.random() * ws.reduce((a, b) => a + b, 0);
+      out = c.outcomes[c.outcomes.length - 1];
+      for (let i = 0; i < ws.length; i++) { r -= ws[i]; if (r < 0) { out = c.outcomes[i]; break; } }
+    }
+    const effects = out.effects || {};
+    const applied = {};
+    for (const k in effects) {
+      const before = S.stats[k];
+      S.stats[k] = clamp(before + effects[k]);
+      applied[k] = S.stats[k] - before;
+    }
+    for (const f of [].concat(c.flags || [], out.flags || [])) S.flags[f] = true;
+    const eduName = out.edu !== undefined ? out.edu : c.edu;
+    const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
+    if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
+
+    log(`${mentored ? "🎓 교육 멘토링 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    renderStats("stats", applied);
+    playSound(out.sound || c.sound);
+
+    // 결과 표시
+    $("evChoices").style.display = "none";
+    $("evResultText").textContent = fill(out.result || "");
+    $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
+    const info = S.current.info;
+    $("evInfo").style.display = info ? "block" : "none";
+    $("evInfoText").textContent = fill(info || "");
+    $("evResult").style.display = "block";
+    $("evContinue").onclick = () => closeEvent(out.next || c.next);
+  }
+
+  function closeEvent(nextId) {
+    $("eventModal").classList.remove("open");
+    S.busy = false;
+    const next = nextId && EVENTS.find((e) => e.id === nextId);
+    if (next) return openEvent(next);
+    if (S.age >= SETTINGS.maxAge) ending();
+  }
+
+  // ── 엔딩 ──
+  function ending() {
+    S.busy = true;
+    const end = ENDINGS.find((e) => meets(e.requires)) || { title: "끝", text: "" };
+    $("endTitle").textContent = fill(end.title);
+    $("endText").textContent = fill(end.text);
+    renderStats("endStats");
+    $("eduList").innerHTML = S.edu.length
+      ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
+      : "<li>받은 교육이 없습니다.</li>";
+    show("endScreen");
+  }
+
+  // ── 시작 ──
+  document.title = SETTINGS.title;
+  $("gameTitle").textContent = SETTINGS.title;
+  $("gameSubtitle").textContent = SETTINGS.subtitle;
+  $("startBtn").onclick = start;
+  $("nameInput").onkeydown = (e) => { if (e.key === "Enter") start(); };
+  $("skipBtn").onclick = skipToEvent;
+  $("restartBtn").onclick = () => { show("startScreen"); $("nameInput").value = ""; };
+})();
+</script>
+</body>
+</html>
