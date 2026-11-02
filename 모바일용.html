@@ -227,6 +227,7 @@ const SETTINGS = {
     chance: 0.2,
     repeat: 0.35,                   // 한 번 나온 뒤엔 다음 확률이 35%로 줄어듦 (2·3번은 드물게)
     max: 3,
+    edge: 0.1,                      // 인생의 처음·마지막 10%(0~7세, 73~80세)에는 멘토링이 나오지 않음
     title: "🎓 교육 멘토링",
     text: `교수님 찬스가 찾아왔다!
 교수님이 이 시기에 가장 좋은 선택을 직접 알려 주십니다.
@@ -1305,7 +1306,8 @@ addEnding({
     // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
     const best = list.find((c) => c.mentor);
     const M = SETTINGS.mentoring;
-    if (best && M && !S.mentorRolled[st.id]) {
+    const edge = SETTINGS.maxAge * (M?.edge ?? 0); // 인생 양끝 구간에선 멘토링 없음
+    if (best && M && S.age >= edge && S.age <= SETTINGS.maxAge - edge && !S.mentorRolled[st.id]) {
       S.mentorRolled[st.id] = true;
       const p = M.chance * luck() * Math.pow(M.repeat ?? 1, S.mentorCount);
       if (S.mentorCount < M.max && Math.random() < p) {

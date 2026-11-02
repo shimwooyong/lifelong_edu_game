@@ -185,7 +185,8 @@
     // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
     const best = list.find((c) => c.mentor);
     const M = SETTINGS.mentoring;
-    if (best && M && !S.mentorRolled[st.id]) {
+    const edge = SETTINGS.maxAge * (M?.edge ?? 0); // 인생 양끝 구간에선 멘토링 없음
+    if (best && M && S.age >= edge && S.age <= SETTINGS.maxAge - edge && !S.mentorRolled[st.id]) {
       S.mentorRolled[st.id] = true;
       const p = M.chance * luck() * Math.pow(M.repeat ?? 1, S.mentorCount);
       if (S.mentorCount < M.max && Math.random() < p) {
