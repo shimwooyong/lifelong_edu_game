@@ -5,7 +5,7 @@ const Net = (() => {
   const getAt = (obj, path) => path.split("/").filter(Boolean).reduce((o, k) => (o == null ? undefined : o[k]), obj);
   const clone = (v) => (v === undefined ? null : JSON.parse(JSON.stringify(v)));
 
-  if (cfg.apiKey && window.firebase) {
+  if (cfg.databaseURL && window.firebase) {
     firebase.initializeApp(cfg);
     const db = firebase.database();
     const ref = (p) => db.ref(p ? `${ROOT}/${p}` : ROOT);
