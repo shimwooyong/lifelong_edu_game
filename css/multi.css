@@ -56,3 +56,4 @@
 
 /* 기록은 매번 다시 그리므로 등장 애니메이션 끔 */
 .log .entry { animation: none; }
+.admin-card-head .tag.cls-tag { margin-left: 0; background: #efe7ff; }

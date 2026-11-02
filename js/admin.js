@@ -22,33 +22,23 @@
   $("createBtn").onclick = () => {
     const n = Math.max(1, Math.min(30, parseInt($("groupCount").value, 10) || 7));
     if (root && root.config && !confirm("지금 방을 지우고 새로 만들까요? 진행 중인 게임이 모두 사라집니다.")) return;
+    // 방을 만들 때 모든 조의 소득분위를 한꺼번에 무작위로 정한다 (조끼리 겹치지 않게, 10조 넘으면 다시 섞어서)
+    const cls = [];
+    while (cls.length < n) {
+      const deck = SETTINGS.startClasses.map((c) => c.name);
+      for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+      cls.push(...deck);
+    }
     const groups = {};
-    for (let i = 1; i <= n; i++) groups["g" + i] = { status: "waiting" };
+    for (let i = 1; i <= n; i++) groups["g" + i] = { status: "waiting", cls: cls[i - 1] };
     Net.set("", { config: { id: Date.now(), count: n }, groups });
   };
 
-  // 아직 어느 조도 받지 않은 소득분위를 무작위로 count개 고른다 (10개를 넘으면 덜 쓰인 분위부터 다시)
-  function pickClasses(count) {
-    const gs = (root && root.groups) || {};
-    const used = {};
-    for (const g in gs) if (gs[g].game) used[gs[g].game.cls] = (used[gs[g].game.cls] || 0) + 1;
-    const names = SETTINGS.startClasses.map((c) => c.name);
-    const picks = [];
-    for (let k = 0; k < count; k++) {
-      const min = Math.min(...names.map((n) => used[n] || 0));
-      const pool = names.filter((n) => (used[n] || 0) === min);
-      const n = pool[Math.floor(Math.random() * pool.length)];
-      used[n] = (used[n] || 0) + 1;
-      picks.push(n);
-    }
-    return picks;
-  }
-
-  function start(g, clsName) {
+  function start(g) {
     const names = SETTINGS.randomNames;
     Net.tx(`groups/${g}`, (grp) => {
       if (grp.status !== "waiting") return;
-      grp.game = Logic.newGame(names[Math.floor(Math.random() * names.length)], clsName);
+      grp.game = Logic.newGame(names[Math.floor(Math.random() * names.length)], grp.cls);
       grp.status = "playing";
       return grp;
     });
@@ -56,8 +46,8 @@
   $("startAllBtn").onclick = () => {
     const gs = (root && root.groups) || {};
     const ready = order(gs).filter((g) => gs[g].status === "waiting" && Object.keys(gs[g].members || {}).length === 4);
-    const cls = pickClasses(ready.length);
-    ready.forEach((g, i) => start(g, cls[i]));
+
+    ready.forEach((g) => start(g));
   };
 
   function render() {
@@ -94,14 +84,14 @@
           <ul class="mini-log">${last}</ul>`;
       }
       const tag = grp.status === "waiting" ? "대기" : grp.status === "playing" ? "진행 중" : "끝";
-      return `<div class="admin-card"><div class="admin-card-head"><b>${g.slice(1)}조</b>
+      return `<div class="admin-card"><div class="admin-card-head"><b>${g.slice(1)}조</b> <span class="tag cls-tag">${esc(grp.cls || "")}</span>
         ${grp.game ? `<span class="muted">${esc(grp.game.chars.child.name)}네</span>` : ""}<span class="tag">${tag}</span></div>
         <div class="seats-row">${seats}</div>${body}</div>`;
     }).join("");
     $("groups").querySelectorAll("[data-start]").forEach((b) => (b.onclick = () => {
       const g = b.dataset.start, n = Object.keys(gs[g].members || {}).length;
       if (n < 4 && !confirm(`${g.slice(1)}조는 ${n}명뿐이에요. 비어 있는 역할의 선택은 진행되지 않습니다. 그래도 시작할까요?`)) return;
-      start(g, pickClasses(1)[0]);
+      start(g);
     }));
   }
 })();
