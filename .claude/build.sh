@@ -30,9 +30,9 @@ inline_file() {
 {
   while IFS= read -r line || [ -n "$line" ]; do
     if [[ "$line" =~ \<link\ rel=\"stylesheet\"\ href=\"([^\"]+)\" ]]; then
-      echo "<style>"; inline_file "${BASH_REMATCH[1]}"; echo "</style>"
+      echo "<style>"; inline_file "${BASH_REMATCH[1]%%[?]*}"; echo "</style>"
     elif [[ "$line" =~ \<script\ src=\"([^\"]+)\"\>\</script\> ]]; then
-      echo "<script>"; inline_file "${BASH_REMATCH[1]}"; echo "</script>"
+      echo "<script>"; inline_file "${BASH_REMATCH[1]%%[?]*}"; echo "</script>"
     else
       printf '%s\n' "$line"
     fi
