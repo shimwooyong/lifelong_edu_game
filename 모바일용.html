@@ -4,132 +4,156 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>배움의 일생</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
 <style>
+/* 레트로 도트 테마: 두꺼운 테두리, 각진 모서리, 제한된 색 */
 :root {
-  --bg: #f6f3ee;
-  --paper: #ffffff;
-  --ink: #2b2a28;
-  --muted: #8a857c;
-  --line: #e7e1d7;
-  --accent: #3d5afe;
-  --radius: 16px;
+  --bg: #d9c39b;
+  --bg2: #cdb48a;
+  --paper: #fbf3e0;
+  --paper2: #f3e6c8;
+  --ink: #241f2e;
+  --muted: #6b6478;
+  --line: #241f2e;
+  --accent: #3b5dc9;
+  --red: #b13e53;
+  --green: #2f8f5b;
+  --yellow: #ffcd75;
+  --radius: 0;
+  --shadow: 4px 4px 0 var(--ink);
+  --shadow-s: 2px 2px 0 var(--ink);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 @supports (height: 100dvh) { body { height: 100dvh; } }
 body {
-  background: var(--bg);
+  /* 작은 격자무늬 배경 */
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(45deg, var(--bg2) 25%, transparent 25%, transparent 75%, var(--bg2) 75%),
+    linear-gradient(45deg, var(--bg2) 25%, transparent 25%, transparent 75%, var(--bg2) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
   color: var(--ink);
-  font-family: "Noto Sans KR", system-ui, sans-serif;
-  line-height: 1.6;
+  font-family: "Galmuri11", "Galmuri9", monospace;
+  line-height: 1.65;
+  -webkit-font-smoothing: none;
 }
-.screen { display: none; height: 100%; max-width: 640px; margin: 0 auto; }
+h1, h2, h3, .logo { font-family: "Galmuri14", "Galmuri11", monospace; font-weight: 400; }
+img { image-rendering: pixelated; image-rendering: crisp-edges; }
+.screen { display: none; height: 100%; max-width: 640px; margin: 0 auto; background: var(--paper2); border-left: 3px solid var(--ink); border-right: 3px solid var(--ink); }
 .screen.active { display: flex; flex-direction: column; }
 
 /* 버튼 */
 .btn {
-  font: inherit; font-weight: 500;
-  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
-  padding: 12px 18px; border-radius: 12px; cursor: pointer;
-  transition: transform .1s, background .2s;
+  font: inherit; font-weight: 700;
+  border: 3px solid var(--ink); background: var(--paper); color: var(--ink);
+  padding: 10px 16px; border-radius: 0; cursor: pointer; box-shadow: var(--shadow-s);
+  transition: none;
 }
-.btn:hover { background: #faf8f4; }
-.btn:active { transform: scale(.98); }
-.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-.btn.primary:hover { background: #444; }
-.btn:disabled { opacity: .4; cursor: default; }
+.btn:hover { background: var(--yellow); }
+.btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.btn.primary { background: var(--accent); color: var(--paper); }
+.btn.primary:hover { background: #2f4aa6; }
+.btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; background: var(--paper2); color: var(--muted); }
+
+/* 그림 */
+.banner-art { width: 100%; max-width: 384px; align-self: center; border: 3px solid var(--ink); box-shadow: var(--shadow); background: var(--paper); }
+.sprite { width: 24px; height: 32px; }
 
 /* 시작 */
 #startScreen { justify-content: center; padding: 24px; }
 .start-box { text-align: center; display: flex; flex-direction: column; gap: 14px; }
-.start-box h1 { font-size: 44px; font-weight: 900; margin: 0; letter-spacing: -1px; }
-.subtitle { color: var(--muted); margin: 0 0 20px; }
+.start-box h1 { font-size: 40px; margin: 0; }
+.subtitle { color: var(--muted); margin: 0 0 12px; }
 #nameInput {
-  font: inherit; padding: 12px 16px; border-radius: 12px;
-  border: 1px solid var(--line); text-align: center; background: var(--paper);
+  font: inherit; padding: 10px 14px; border-radius: 0;
+  border: 3px solid var(--ink); text-align: center; background: var(--paper);
 }
 
 /* 상단 */
-.top { display: flex; justify-content: space-between; align-items: center; padding: 20px 16px 8px; }
-.who { display: flex; align-items: center; gap: 10px; font-size: 18px; }
-.tag { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #eee; }
-.age { font-size: 40px; font-weight: 900; line-height: 1; }
-.age small { font-size: 16px; font-weight: 500; margin-left: 2px; color: var(--muted); }
+.top { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 8px; background: var(--paper); border-bottom: 3px solid var(--ink); }
+.who { display: flex; align-items: center; gap: 8px; font-size: 17px; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 700; padding: 1px 8px; border: 2px solid var(--ink); background: var(--paper2); border-radius: 0; }
+.age { font-family: "Galmuri14", monospace; font-size: 36px; line-height: 1; }
+.age small { font-family: "Galmuri11", monospace; font-size: 14px; margin-left: 2px; color: var(--muted); }
 
 /* 능력치 */
-.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px 16px; }
-.stat { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; position: relative; }
-.stat .name { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
-.stat .name b { color: var(--ink); font-size: 18px; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 16px 6px; }
+.stat { background: var(--paper); border: 3px solid var(--ink); border-radius: 0; padding: 6px 10px; position: relative; box-shadow: var(--shadow-s); }
+.stat .name { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: baseline; }
+.stat .name b { color: var(--ink); font-family: "Galmuri14", monospace; font-size: 18px; font-weight: 400; }
 .stat .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-.card.mentor { border: 3px solid #e0a800; box-shadow: 0 0 0 6px rgba(224,168,0,.18); }
-.card.mentor h2 { color: #b07d00; }
-.edu-list li.plain { opacity: .6; }
-.stat .bar { height: 6px; background: #f0ece5; border-radius: 99px; margin-top: 6px; overflow: hidden; }
-.stat .fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.stat .bar { height: 6px; background: var(--paper2); margin-top: 6px; }
+.stat .fill { height: 100%; }
 .float {
-  position: absolute; right: 8px; top: -6px; font-size: 12px; font-weight: 700;
-  animation: floatUp 1.4s ease forwards; pointer-events: none;
+  position: absolute; right: 8px; top: -10px; font-size: 13px; font-weight: 700;
+  animation: floatUp 1.4s steps(6) forwards; pointer-events: none;
 }
 @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-18px); } }
 
 /* 인생 진행 막대 */
-.timeline-bar { display: flex; gap: 3px; padding: 4px 16px 8px; }
-.timeline-bar div { flex: 1; height: 4px; border-radius: 99px; background: #e4ded3; transition: background .4s; }
+.timeline-bar { display: flex; gap: 0; margin: 4px 16px 8px; border: 2px solid var(--ink); }
+.timeline-bar div { flex: 1; height: 8px; background: var(--paper); border-right: 2px solid var(--ink); }
+.timeline-bar div:last-child { border-right: 0; }
 
 /* 기록 */
 .log { flex: 1; overflow-y: auto; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
-.entry { display: flex; gap: 12px; font-size: 15px; animation: fadeIn .4s ease; }
-.entry .y { min-width: 40px; color: var(--muted); font-size: 13px; padding-top: 2px; text-align: right; }
-.entry.stage { margin-top: 12px; font-weight: 700; }
-.entry.event .t { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+.entry { display: flex; gap: 10px; font-size: 14px; animation: fadeIn .3s steps(3); }
+.entry .y { min-width: 44px; color: var(--muted); font-size: 12px; padding-top: 3px; text-align: right; }
+.entry.stage { margin-top: 10px; font-family: "Galmuri14", monospace; }
+.entry.event .t { background: var(--paper); border: 2px solid var(--ink); padding: 5px 9px; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.controls { display: flex; gap: 8px; padding: 12px 16px 20px; }
+.controls { display: flex; gap: 8px; padding: 10px 16px 18px; background: var(--paper); border-top: 3px solid var(--ink); }
 .controls .btn { flex: 1; white-space: nowrap; }
 
 /* 이벤트 창 */
 .modal {
-  position: fixed; inset: 0; background: rgba(30, 28, 24, .45);
-  display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10;
+  position: fixed; inset: 0; background: rgba(36, 31, 46, .6);
+  display: none; align-items: center; justify-content: center; padding: 12px; z-index: 10;
 }
 .modal.open { display: flex; }
 .card {
-  background: var(--paper); border-radius: var(--radius); width: 100%; max-width: 520px;
-  max-height: 92vh; overflow-y: auto; padding: 22px; animation: pop .25s ease;
+  background: var(--paper); border: 3px solid var(--ink); border-radius: 0; width: 100%; max-width: 520px;
+  max-height: 94vh; overflow-y: auto; padding: 16px; box-shadow: 6px 6px 0 var(--ink); animation: pop .2s steps(2);
 }
-@keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes pop { from { transform: translateY(8px); } to { transform: none; } }
 .card-head { display: flex; justify-content: space-between; align-items: center; }
-.ev-age { color: var(--muted); font-size: 14px; }
-.card h2 { margin: 10px 0; font-size: 22px; }
-.ev-image { width: 100%; border-radius: 12px; margin-bottom: 10px; display: none; }
-.ev-text { white-space: pre-line; margin: 0 0 16px; }
+.ev-age { color: var(--muted); font-size: 13px; }
+.card h2 { margin: 8px 0; font-size: 21px; }
+.ev-image { width: 100%; max-height: 30vh; object-fit: cover; border: 3px solid var(--ink); margin-bottom: 10px; display: none; background: var(--paper2); }
+.ev-text { white-space: pre-line; margin: 0 0 14px; font-size: 15px; }
 .choices { display: flex; flex-direction: column; gap: 8px; }
-.choices .btn { text-align: left; }
+.choices .btn { text-align: left; font-weight: 400; }
+.choices .btn::before { content: "▸ "; color: var(--accent); }
 .result { display: none; }
-.deltas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.deltas span { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: #f3f0ea; }
-.info { background: #f2f5ff; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 14px; }
+.deltas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.deltas span { font-size: 13px; font-weight: 700; padding: 2px 8px; border: 2px solid var(--ink); background: var(--paper2); }
+.info { background: #e3ecd9; border: 2px dashed var(--ink); padding: 10px 12px; margin-bottom: 14px; font-size: 13px; }
 .info p { white-space: pre-line; margin: 6px 0 0; }
 #evContinue { width: 100%; }
 
+/* 교육 멘토링 */
+.card.mentor { background: #fff4d6; border-color: #7a5200; box-shadow: 6px 6px 0 #7a5200; }
+.card.mentor h2 { color: #8a5a00; }
+
 /* 엔딩 */
 #endScreen { overflow-y: auto; }
-.end-box { padding: 32px 16px; text-align: center; }
+.end-box { padding: 28px 16px; text-align: center; }
 .end-label { color: var(--muted); margin: 0; }
-.end-box h2 { font-size: 32px; margin: 4px 0 12px; }
+.end-box h2 { font-size: 30px; margin: 4px 0 12px; }
 .end-text { white-space: pre-line; }
 .end-box h3 { margin-top: 24px; }
 .edu-list { list-style: none; padding: 0; text-align: left; margin-bottom: 24px; }
-.edu-list li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; }
+.edu-list li { background: var(--paper); border: 2px solid var(--ink); padding: 6px 10px; margin-bottom: 6px; font-size: 14px; }
 .edu-list li small { color: var(--muted); margin-right: 8px; }
+.edu-list li.plain { opacity: .6; }
 
 @media (max-width: 420px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
-  .start-box h1 { font-size: 36px; }
+  .start-box h1 { font-size: 32px; }
+  .age { font-size: 30px; }
 }
 </style>
 </head>
@@ -137,6 +161,7 @@ body {
   <!-- 시작 화면 -->
   <section id="startScreen" class="screen active">
     <div class="start-box">
+      <img id="lobbyArt" class="banner-art" alt="">
       <h1 id="gameTitle"></h1>
       <p id="gameSubtitle" class="subtitle"></p>
       <input id="nameInput" maxlength="8" placeholder="이름을 입력하세요 (비우면 무작위)">
@@ -262,7 +287,7 @@ function addEnding(e) { ENDINGS.push(e); }
 // 인생 시기 구분
 // lines: 이벤트가 없는 해에 무작위로 나오는 한 줄 일기
 addStage({
-  id: "영유아", from: 0, to: 7, color: "#ffb3c1",
+  id: "영유아", from: 0, to: 7, color: "#ef7d57",
   lines: [
     "{이름}이(가) 처음으로 걸음마를 뗐다.",
     "동네 놀이터가 세상의 전부였다.",
@@ -271,7 +296,7 @@ addStage({
   ],
 });
 addStage({
-  id: "청소년", from: 8, to: 19, color: "#8fd3ff",
+  id: "청소년", from: 8, to: 19, color: "#41a6f6",
   lines: [
     "새 학년, 새 친구들을 만났다.",
     "시험 기간이라 밤늦게까지 공부했다.",
@@ -280,7 +305,7 @@ addStage({
   ],
 });
 addStage({
-  id: "대학생", from: 20, to: 26, color: "#a0e7a0",
+  id: "대학생", from: 20, to: 26, color: "#4fb35f",
   lines: [
     "수강신청 전쟁에서 살아남았다.",
     "동아리 MT를 다녀왔다.",
@@ -289,7 +314,7 @@ addStage({
   ],
 });
 addStage({
-  id: "성인", from: 27, to: 49, color: "#ffd580",
+  id: "성인", from: 27, to: 49, color: "#ffcd75",
   lines: [
     "월요일 아침 지하철은 오늘도 꽉 찼다.",
     "야근이 이어진 한 주였다.",
@@ -298,7 +323,7 @@ addStage({
   ],
 });
 addStage({
-  id: "중장년", from: 50, to: 64, color: "#d4a5ff",
+  id: "중장년", from: 50, to: 64, color: "#b48ad6",
   lines: [
     "건강검진 결과표를 오래 들여다봤다.",
     "자녀가 독립해 집이 조용해졌다.",
@@ -307,7 +332,7 @@ addStage({
   ],
 });
 addStage({
-  id: "노년", from: 65, to: 200, color: "#c9b79c",
+  id: "노년", from: 65, to: 200, color: "#b08a5a",
   lines: [
     "손주가 놀러 와 집이 북적였다.",
     "아침 산책길에 이웃과 인사를 나눴다.",
@@ -1132,6 +1157,265 @@ addEnding({
 </script>
   <!-- 게임 엔진 -->
 <script>
+// 도트 그림: 코드로 작은 그림을 그려 이미지로 만든다 (외부 애셋 없음)
+// 이벤트 그림은 data 쪽 image 필드가 있으면 그걸 쓰고, 없으면 아래 SCENE_OF로 자동 선택
+window.Pixel = (() => {
+  const C = {
+    ink: "#241f2e", ink2: "#3a3346", gray: "#8b8599", gray2: "#5a5466", lgray: "#c9c3cf",
+    cream: "#fbf3e0", paper: "#f3e6c8", wall2: "#d9c39b",
+    sky: "#8fcfe6", sky2: "#c4e6ee", night: "#29366f", night2: "#1a1c2c",
+    sun: "#ffcd75", orange: "#ef7d57", red: "#b13e53", pink: "#e98a9a",
+    green: "#38b764", grass: "#4fa356", grass2: "#257f4c", teal: "#257179",
+    blue: "#3b5dc9", lblue: "#41a6f6", win: "#73c2e6", purple: "#7a4c9e",
+    wood: "#8a5a3c", wood2: "#5e3b28", dirt: "#b08a5a",
+    skin: "#f2c19a", skin2: "#d99a74", hair: "#3a2a20", hairG: "#d8d2dc", board: "#2f5a46",
+  };
+  const W = 96, H = 56;
+  let x0; // 현재 캔버스 컨텍스트
+
+  const r = (x, y, w, h, c) => { x0.fillStyle = C[c] || c; x0.fillRect(x, y, w, h); };
+  const box = (x, y, w, h, c) => { r(x, y, w, h, "ink"); r(x + 1, y + 1, w - 2, h - 2, c); };
+
+  // ── 조각 ──
+  const sky = (c = "sky") => { r(0, 0, W, H, c); };
+  const ground = (y, c = "grass", c2 = "grass2") => { r(0, y, W, H - y, c); r(0, y, W, 1, c2); for (let i = 3; i < W; i += 9) r(i, y + 4 + (i % 3), 2, 1, c2); };
+  const cloud = (x, y) => { r(x + 2, y, 6, 1, "cream"); r(x, y + 1, 11, 2, "cream"); r(x + 1, y + 3, 8, 1, "sky2"); };
+  const sun = (x, y) => { r(x + 1, y, 5, 7, "sun"); r(x, y + 1, 7, 5, "sun"); };
+  const moon = (x, y) => { r(x + 1, y, 4, 6, "cream"); r(x, y + 1, 6, 4, "cream"); r(x + 3, y, 3, 4, "night"); };
+  const stars = () => [[8, 6], [20, 12], [40, 4], [70, 9], [86, 15], [56, 14]].forEach(([a, b]) => r(a, b, 1, 1, "cream"));
+  const tree = (x, y) => { r(x + 2, y - 5, 2, 5, "wood"); r(x, y - 12, 6, 7, "grass2"); r(x + 1, y - 13, 4, 1, "grass2"); r(x + 1, y - 11, 2, 2, "green"); };
+  const win = (x, y, c = "win") => { box(x, y, 5, 5, c); r(x + 1, y + 1, 1, 1, "cream"); };
+  const door = (x, y, c = "wood") => { box(x, y - 8, 6, 8, c); r(x + 4, y - 4, 1, 1, "sun"); };
+  const flatRoof = (x, y, w, c) => { r(x - 1, y - 3, w + 2, 3, "ink"); r(x, y - 2, w, 2, c); };
+  const peakRoof = (x, y, w, c) => { // 세모 지붕, y는 지붕 밑
+    const hh = Math.ceil(w / 2);
+    for (let i = 0; i < hh; i++) { r(x + i - 1, y - i - 1, w - 2 * i + 2, 1, "ink"); r(x + i, y - i - 1, Math.max(0, w - 2 * i), 1, c); }
+  };
+  const building = (x, y, w, h, wall = "paper", roof = "red", rows = 1) => {
+    box(x, y - h, w, h, wall); flatRoof(x, y - h, w, roof);
+    for (let ry = 0; ry < rows; ry++) for (let wx = x + 3; wx + 5 < x + w - 1; wx += 8) win(wx, y - h + 3 + ry * 8);
+  };
+  const bush = (x, y) => { r(x, y - 3, 7, 3, "grass2"); r(x + 1, y - 4, 5, 1, "grass2"); r(x + 1, y - 3, 2, 1, "green"); };
+
+  // 사람: x,y는 왼발 아래. kind: baby | kid | teen | adult | elder
+  function person(x, y, o = {}) {
+    const k = o.kind || "adult", shirt = o.shirt || "blue", pants = o.pants || "ink2";
+    const hair = o.hair || (k === "elder" ? "hairG" : "hair");
+    if (k === "baby") {
+      const t = y - 6;
+      r(x, t, 4, 3, "skin"); r(x, t, 4, 1, hair); r(x + 1, t + 1, 1, 1, "ink"); r(x + 3, t + 1, 1, 1, "ink");
+      r(x - 1, t + 3, 6, 3, shirt); return;
+    }
+    if (k === "kid") {
+      const t = y - 10;
+      r(x, t, 4, 2, hair); r(x, t + 1, 4, 3, "skin"); r(x, t + 1, 4, 1, hair);
+      r(x + 1, t + 2, 1, 1, "ink"); r(x + 3, t + 2, 1, 1, "ink");
+      r(x, t + 4, 4, 3, shirt); r(x - 1, t + 4, 1, 2, shirt); r(x + 4, t + 4, 1, 2, shirt);
+      r(x - 1, t + 6, 1, 1, "skin"); r(x + 4, t + 6, 1, 1, "skin");
+      r(x, t + 7, 1, 2, pants); r(x + 3, t + 7, 1, 2, pants); r(x, t + 9, 1, 1, "ink"); r(x + 3, t + 9, 1, 1, "ink");
+      if (o.bag) r(x + 4, t + 4, 2, 3, o.bag);
+      return;
+    }
+    const h = k === "teen" ? 13 : 14, t = y - h;
+    r(x, t, 5, 2, hair); r(x, t + 2, 5, 3, "skin"); r(x, t + 2, 1, 1, hair);
+    r(x + 1, t + 3, 1, 1, "ink"); r(x + 3, t + 3, 1, 1, "ink");
+    if (o.glasses) { r(x, t + 3, 5, 1, "ink"); r(x + 1, t + 3, 1, 1, "win"); r(x + 3, t + 3, 1, 1, "win"); }
+    const b = t + 5, bh = h - 9;
+    r(x, b, 5, bh, shirt); r(x - 1, b, 1, bh - 1, shirt); r(x + 5, b, 1, bh - 1, shirt);
+    r(x - 1, b + bh - 1, 1, 1, "skin"); r(x + 5, b + bh - 1, 1, 1, "skin");
+    if (o.tie) r(x + 2, b, 1, 3, o.tie);
+    r(x, b + bh, 2, 3, pants); r(x + 3, b + bh, 2, 3, pants);
+    r(x, y - 1, 2, 1, "ink"); r(x + 3, y - 1, 2, 1, "ink");
+    if (o.bag) r(x + 5, b, 2, 4, o.bag);
+    if (k === "elder") r(x + 7, b + 1, 1, h - 6, "wood");
+  }
+
+  // ── 장면 ──
+  const SCENES = {
+    home() {
+      sky(); sun(80, 5); cloud(10, 8); cloud(50, 4); ground(44);
+      box(24, 26, 34, 18, "paper"); peakRoof(23, 26, 36, "red");
+      win(28, 30); win(48, 30); door(38, 44);
+      r(53, 12, 3, 6, "ink2"); tree(66, 44); tree(4, 44); bush(14, 44);
+      person(64, 52, { kind: "adult", shirt: "orange" }); person(72, 52, { kind: "kid", shirt: "sun" }); person(78, 52, { kind: "adult", shirt: "blue" });
+    },
+    kinder() {
+      sky(); sun(6, 5); cloud(60, 6); ground(44);
+      box(8, 24, 40, 20, "cream"); flatRoof(8, 24, 40, "orange");
+      for (let i = 0; i < 4; i++) r(10 + i * 10, 21, 8, 2, ["red", "sun", "green", "lblue"][i]);
+      win(12, 28, "sun"); win(34, 28, "sun"); door(24, 44, "red");
+      // 미끄럼틀
+      r(60, 30, 2, 14, "ink"); r(62, 30, 6, 2, "red"); for (let i = 0; i < 12; i++) r(68 + i, 31 + i, 2, 1, "sun");
+      r(58, 26, 6, 4, "lblue");
+      person(52, 52, { kind: "kid", shirt: "pink" }); person(84, 52, { kind: "kid", shirt: "green" }); person(72, 52, { kind: "baby", shirt: "sun" });
+    },
+    school() {
+      sky(); cloud(6, 6); cloud(70, 4); ground(46);
+      building(14, 46, 64, 26, "paper", "teal", 2);
+      box(42, 12, 8, 8, "cream"); r(45, 14, 1, 3, "ink"); r(46, 16, 2, 1, "ink"); // 시계
+      door(43, 46, "wood");
+      r(86, 14, 1, 32, "gray2"); r(87, 14, 7, 5, "red"); r(88, 15, 4, 3, "cream");
+      person(4, 54, { kind: "kid", shirt: "blue", bag: "red" }); person(84, 54, { kind: "teen", shirt: "ink2", pants: "ink" });
+    },
+    academy() {
+      sky("night"); stars(); moon(80, 4); r(0, 46, W, 10, "ink2");
+      building(10, 46, 22, 36, "wall2", "gray2", 4); building(64, 46, 26, 30, "wall2", "gray2", 3);
+      box(36, 10, 24, 36, "paper"); flatRoof(36, 10, 24, "purple");
+      box(38, 13, 20, 7, "sun"); r(40, 15, 16, 1, "red"); r(40, 17, 10, 1, "red");
+      for (let ry = 0; ry < 3; ry++) { win(39, 23 + ry * 7, "sun"); win(46, 23 + ry * 7, "sun"); win(53, 23 + ry * 7, "sun"); }
+      person(30, 55, { kind: "teen", shirt: "blue", bag: "orange" }); person(62, 55, { kind: "teen", shirt: "red", bag: "teal" });
+    },
+    library() {
+      r(0, 0, W, 44, "paper"); r(0, 44, W, 12, "wood"); r(0, 44, W, 1, "wood2");
+      for (let s = 0; s < 3; s++) {
+        const sx = 6 + s * 30; box(sx, 6, 24, 36, "wood");
+        for (let row = 0; row < 4; row++) {
+          r(sx + 1, 14 + row * 8, 22, 1, "wood2");
+          for (let b = 0; b < 9; b++) r(sx + 2 + b * 2 + (b > 5 ? 1 : 0), 8 + row * 8, 2, 6 - (b % 3), ["red", "blue", "green", "sun", "purple", "teal"][(b + row + s) % 6]);
+        }
+      }
+      box(30, 40, 36, 5, "wood2");
+      person(36, 52, { kind: "adult", shirt: "orange" }); person(56, 52, { kind: "kid", shirt: "green" });
+      r(44, 38, 6, 3, "cream"); r(46, 38, 1, 3, "ink2");
+    },
+    university() {
+      sky(); cloud(4, 5); cloud(74, 8); ground(46);
+      box(16, 22, 64, 24, "cream"); peakRoof(15, 22, 66, "gray");
+      for (let i = 0; i < 6; i++) { r(20 + i * 10, 24, 4, 20, "paper"); r(20 + i * 10, 24, 4, 1, "ink"); r(20 + i * 10, 43, 4, 1, "ink"); }
+      r(46, 12, 4, 3, "sun");
+      person(6, 54, { kind: "adult", shirt: "green", bag: "ink2" }); person(84, 54, { kind: "adult", shirt: "purple" });
+      r(40, 50, 16, 2, "lgray"); r(42, 48, 12, 2, "lgray");
+    },
+    office() {
+      r(0, 0, W, 40, "sky2"); r(0, 40, W, 16, "gray"); r(0, 40, W, 1, "gray2");
+      box(6, 6, 30, 22, "win"); r(20, 6, 1, 22, "ink"); r(6, 17, 30, 1, "ink"); r(9, 12, 6, 5, "lgray"); r(25, 9, 7, 8, "lgray");
+      box(44, 30, 44, 4, "wood"); r(48, 34, 2, 10, "wood2"); r(82, 34, 2, 10, "wood2");
+      box(52, 18, 14, 11, "ink2"); r(54, 20, 10, 7, "lblue"); r(58, 29, 2, 1, "ink");
+      box(70, 22, 12, 7, "cream"); r(72, 24, 8, 1, "gray"); r(72, 26, 6, 1, "gray");
+      person(60, 50, { kind: "adult", shirt: "cream", tie: "red", pants: "ink2" });
+      r(10, 34, 6, 10, "green"); r(11, 31, 4, 3, "grass2");
+    },
+    center() {
+      sky(); sun(82, 4); cloud(8, 6); ground(46);
+      building(12, 46, 56, 24, "cream", "green", 2);
+      box(26, 14, 28, 7, "green"); r(29, 16, 4, 3, "sun"); r(35, 17, 16, 1, "cream");
+      door(36, 46, "teal");
+      tree(74, 46); bush(84, 46);
+      person(28, 54, { kind: "adult", shirt: "orange" }); person(48, 54, { kind: "elder", shirt: "purple" }); person(4, 54, { kind: "adult", shirt: "blue" });
+    },
+    hospital() {
+      sky(); cloud(60, 4); ground(46, "lgray", "gray");
+      building(14, 46, 60, 30, "cream", "lblue", 2);
+      box(38, 10, 12, 12, "cream"); r(42, 12, 4, 8, "red"); r(40, 14, 8, 4, "red");
+      door(41, 46, "lblue");
+      person(80, 54, { kind: "adult", shirt: "cream", pants: "lblue" }); person(4, 54, { kind: "adult", shirt: "sun" });
+    },
+    cafe() {
+      r(0, 0, W, 40, "wall2"); r(0, 40, W, 16, "wood"); r(0, 40, W, 1, "wood2");
+      for (let i = 0; i < W; i += 12) r(i, 0, 6, 4, "red");
+      box(6, 8, 26, 16, "ink2"); r(9, 11, 20, 1, "sun"); r(9, 14, 14, 1, "cream"); r(9, 17, 17, 1, "cream"); r(9, 20, 10, 1, "cream");
+      box(10, 30, 76, 10, "wood2");
+      box(56, 18, 16, 12, "gray"); r(59, 21, 10, 3, "ink"); r(62, 24, 2, 4, "ink2"); r(60, 28, 6, 2, "cream");
+      person(40, 34, { kind: "elder", shirt: "teal" }); r(40, 25, 5, 1, "cream");
+      r(78, 26, 4, 4, "cream"); r(82, 27, 1, 2, "cream"); r(79, 23, 1, 2, "lgray");
+      person(20, 54, { kind: "adult", shirt: "orange" });
+    },
+    classroom() {
+      r(0, 0, W, 42, "paper"); r(0, 42, W, 14, "wood"); r(0, 42, W, 1, "wood2");
+      box(16, 4, 64, 24, "board"); r(16, 27, 64, 2, "wood");
+      r(22, 9, 20, 1, "cream"); r(22, 13, 28, 1, "cream"); r(22, 17, 14, 1, "cream"); r(56, 9, 16, 14, "board"); r(58, 10, 12, 1, "sun"); r(58, 21, 12, 1, "sun"); r(63, 11, 2, 10, "sun");
+      for (let i = 0; i < 3; i++) { box(8 + i * 30, 44, 20, 4, "wood2"); }
+      person(12, 54, { kind: "adult", shirt: "blue" }); person(44, 54, { kind: "elder", shirt: "orange" }); person(74, 54, { kind: "teen", shirt: "green" });
+      person(84, 40, { kind: "adult", shirt: "purple", glasses: true });
+    },
+    storm() {
+      sky("gray2"); r(0, 0, W, 12, "ink2");
+      for (let i = 0; i < 5; i++) { r(i * 20 - 4, 8 + (i % 2) * 3, 22, 5, "gray"); r(i * 20, 6 + (i % 2) * 3, 14, 2, "gray"); }
+      for (let i = 0; i < 26; i++) r((i * 37) % W, 16 + ((i * 13) % 30), 1, 3, "lblue");
+      ground(46, "gray", "ink2");
+      building(4, 46, 22, 20, "wall2", "ink2", 2); building(70, 46, 22, 24, "wall2", "ink2", 2);
+      r(38, 30, 16, 2, "red"); r(40, 28, 12, 2, "red"); r(45, 32, 1, 12, "ink");
+      person(43, 54, { kind: "adult", shirt: "teal" });
+    },
+    phone() {
+      r(0, 0, W, 44, "sky2"); r(0, 44, W, 12, "lgray"); r(0, 44, W, 1, "gray");
+      box(14, 6, 26, 40, "ink2"); r(17, 9, 20, 28, "lblue"); r(20, 12, 14, 4, "cream"); r(20, 19, 9, 3, "sun"); r(20, 25, 12, 3, "cream"); r(25, 40, 4, 3, "gray");
+      box(58, 10, 24, 36, "gray"); r(61, 13, 18, 14, "win"); for (let i = 0; i < 6; i++) r(62 + (i % 3) * 6, 30 + Math.floor(i / 3) * 5, 4, 3, "cream");
+      person(46, 54, { kind: "elder", shirt: "red" });
+      r(52, 34, 3, 5, "ink2"); r(53, 35, 1, 3, "lblue");
+    },
+    elder() {
+      sky("sky2"); sun(10, 10); r(0, 0, W, 6, "orange"); ground(44);
+      tree(70, 44); tree(82, 44); bush(4, 44);
+      box(32, 34, 32, 3, "wood"); r(34, 37, 2, 7, "wood2"); r(60, 37, 2, 7, "wood2"); box(32, 28, 32, 3, "wood");
+      person(38, 44, { kind: "elder", shirt: "purple" }); person(52, 44, { kind: "elder", shirt: "teal" });
+      person(20, 54, { kind: "kid", shirt: "sun" });
+    },
+    mentor() {
+      r(0, 0, W, 42, "cream"); r(0, 42, W, 14, "wood"); r(0, 42, W, 1, "wood2");
+      box(8, 4, 52, 28, "board"); r(8, 31, 52, 2, "wood");
+      r(14, 10, 12, 1, "sun"); r(14, 14, 26, 1, "cream"); r(14, 18, 20, 1, "cream"); r(14, 22, 30, 1, "cream");
+      r(46, 8, 8, 8, "sun"); r(48, 10, 4, 4, "board"); r(49, 11, 2, 2, "sun"); // 반짝 별
+      for (let i = 0; i < 8; i++) r(70 + (i % 4) * 6, 4 + Math.floor(i / 4) * 6, 2, 2, "sun");
+      person(70, 52, { kind: "adult", shirt: "teal", glasses: true, hair: "hairG", tie: "sun" });
+      r(77, 40, 1, 6, "wood2"); r(76, 40, 3, 1, "sun");
+      person(20, 54, { kind: "teen", shirt: "blue" }); person(40, 54, { kind: "adult", shirt: "orange" });
+    },
+  };
+
+  // 이벤트 → 장면
+  const SCENE_OF = {
+    영어유치원: "kinder", 첫기관: "kinder", 육아지원센터: "kinder",
+    초등입학: "school", 고교선택: "school", 자유학기: "school", 장학멘토링: "school",
+    대형학원: "academy",
+    AI캠프: "classroom", 경력전환: "classroom", 영재교육원: "classroom", 배움나눔: "classroom", 직무워크숍: "classroom",
+    진로결정: "university", 고졸후학위: "university", 스무살: "university", 청년해외연수: "university",
+    취업준비: "office", 퇴직준비: "office", 회사학습지원: "office", 이직고민: "office",
+    자산관리강의: "center", 신중년일자리: "center",
+    바리스타자격증: "cafe",
+    부모가되다: "home",
+    가계위기: "storm", 실직: "storm", 학업중단위기: "storm",
+    건강이상: "hospital", 인지건강: "hospital",
+    디지털교육: "phone", 금융사기: "phone",
+    학습동아리: "library", 늦깎이공부: "library", 자서전: "library",
+    웰다잉: "elder",
+  };
+  const STAGE_SCENE = { 영유아: "home", 청소년: "school", 대학생: "university", 성인: "office", 중장년: "center", 노년: "elder" };
+
+  const cache = {};
+  function draw(w, h, fn) {
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    x0 = cv.getContext("2d"); fn(); return cv.toDataURL();
+  }
+  function scene(name) {
+    if (!SCENES[name]) name = "home";
+    return cache[name] || (cache[name] = draw(W, H, SCENES[name]));
+  }
+  // 이벤트 그림 주소 (ev.image가 있으면 그것)
+  function forEvent(ev, stageId, mentor) {
+    if (mentor) return scene("mentor");
+    if (ev && ev.image) return ev.image;
+    return scene((ev && (ev.scene || SCENE_OF[ev.id])) || STAGE_SCENE[stageId] || "home");
+  }
+  // 시기별 캐릭터 (작은 아이콘)
+  const KIND = {
+    영유아: { kind: "kid", shirt: "sun" }, 청소년: { kind: "teen", shirt: "blue", bag: "red" },
+    대학생: { kind: "adult", shirt: "green", bag: "ink2" }, 성인: { kind: "adult", shirt: "cream", tie: "red" },
+    중장년: { kind: "adult", shirt: "purple", hair: "gray" }, 노년: { kind: "elder", shirt: "teal" },
+  };
+  function sprite(stageId, extra) {
+    const key = "s_" + stageId + (extra ? JSON.stringify(extra) : "");
+    if (cache[key]) return cache[key];
+    const o = Object.assign({}, KIND[stageId] || KIND.성인, extra || {});
+    return (cache[key] = draw(12, 16, () => person(o.kind === "kid" ? 4 : 3, 16, o)));
+  }
+  return { scene, forEvent, sprite, C };
+})();
+
+// 첫 화면 그림
+(() => { const el = document.getElementById("lobbyArt"); if (el) el.src = Pixel.scene("home"); })();
+</script>
+<script>
 // 게임 엔진: 데이터(data 폴더)를 읽어 게임을 진행한다
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -1208,7 +1492,7 @@ addEnding({
         <div class="stat">
           <div class="name">${k}<b>${v}</b></div>
           <div class="sub">${sub}</div>
-          ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
+          ${d ? `<span class="float" style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
         </div>`);
     }
   }
@@ -1307,7 +1591,8 @@ addEnding({
     $("evText").textContent = fill(ev.text);
     $("eventModal").querySelector(".card").classList.remove("mentor");
     const img = $("evImage");
-    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    const pic = window.Pixel ? Pixel.forEvent(ev, st.id) : ev.image;
+    if (pic) { img.src = pic; img.style.display = "block"; } else img.style.display = "none";
     playSound(ev.sound);
 
     const box = $("evChoices");
@@ -1326,6 +1611,7 @@ addEnding({
       if (S.mentorCount < M.max && Math.random() < p) {
         S.mentorCount++;
         $("eventModal").querySelector(".card").classList.add("mentor");
+        if (window.Pixel) $("evImage").src = Pixel.scene("mentor");
         $("evTitle").textContent = M.title;
         $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
         const b = document.createElement("button");
@@ -1396,7 +1682,7 @@ addEnding({
     $("evChoices").style.display = "none";
     $("evResultText").textContent = fill(out.result || "");
     $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
-      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
     const info = S.current.info;
     $("evInfo").style.display = info ? "block" : "none";
     $("evInfoText").textContent = fill(info || "");

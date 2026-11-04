@@ -1,7 +1,7 @@
 // 인생 시기 구분
 // lines: 이벤트가 없는 해에 무작위로 나오는 한 줄 일기
 addStage({
-  id: "영유아", from: 0, to: 7, color: "#ffb3c1",
+  id: "영유아", from: 0, to: 7, color: "#ef7d57",
   lines: [
     "{이름}이(가) 처음으로 걸음마를 뗐다.",
     "동네 놀이터가 세상의 전부였다.",
@@ -10,7 +10,7 @@ addStage({
   ],
 });
 addStage({
-  id: "청소년", from: 8, to: 19, color: "#8fd3ff",
+  id: "청소년", from: 8, to: 19, color: "#41a6f6",
   lines: [
     "새 학년, 새 친구들을 만났다.",
     "시험 기간이라 밤늦게까지 공부했다.",
@@ -19,7 +19,7 @@ addStage({
   ],
 });
 addStage({
-  id: "대학생", from: 20, to: 26, color: "#a0e7a0",
+  id: "대학생", from: 20, to: 26, color: "#4fb35f",
   lines: [
     "수강신청 전쟁에서 살아남았다.",
     "동아리 MT를 다녀왔다.",
@@ -28,7 +28,7 @@ addStage({
   ],
 });
 addStage({
-  id: "성인", from: 27, to: 49, color: "#ffd580",
+  id: "성인", from: 27, to: 49, color: "#ffcd75",
   lines: [
     "월요일 아침 지하철은 오늘도 꽉 찼다.",
     "야근이 이어진 한 주였다.",
@@ -37,7 +37,7 @@ addStage({
   ],
 });
 addStage({
-  id: "중장년", from: 50, to: 64, color: "#d4a5ff",
+  id: "중장년", from: 50, to: 64, color: "#b48ad6",
   lines: [
     "건강검진 결과표를 오래 들여다봤다.",
     "자녀가 독립해 집이 조용해졌다.",
@@ -46,7 +46,7 @@ addStage({
   ],
 });
 addStage({
-  id: "노년", from: 65, to: 200, color: "#c9b79c",
+  id: "노년", from: 65, to: 200, color: "#b08a5a",
   lines: [
     "손주가 놀러 와 집이 북적였다.",
     "아침 산책길에 이웃과 인사를 나눴다.",

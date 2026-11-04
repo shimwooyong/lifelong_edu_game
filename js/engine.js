@@ -74,7 +74,7 @@
         <div class="stat">
           <div class="name">${k}<b>${v}</b></div>
           <div class="sub">${sub}</div>
-          ${d ? `<span class="float" style="color:${d > 0 ? "#2fb47c" : "#e5484d"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
+          ${d ? `<span class="float" style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${d > 0 ? "+" : ""}${d}</span>` : ""}
         </div>`);
     }
   }
@@ -173,7 +173,8 @@
     $("evText").textContent = fill(ev.text);
     $("eventModal").querySelector(".card").classList.remove("mentor");
     const img = $("evImage");
-    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    const pic = window.Pixel ? Pixel.forEvent(ev, st.id) : ev.image;
+    if (pic) { img.src = pic; img.style.display = "block"; } else img.style.display = "none";
     playSound(ev.sound);
 
     const box = $("evChoices");
@@ -192,6 +193,7 @@
       if (S.mentorCount < M.max && Math.random() < p) {
         S.mentorCount++;
         $("eventModal").querySelector(".card").classList.add("mentor");
+        if (window.Pixel) $("evImage").src = Pixel.scene("mentor");
         $("evTitle").textContent = M.title;
         $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
         const b = document.createElement("button");
@@ -262,7 +264,7 @@
     $("evChoices").style.display = "none";
     $("evResultText").textContent = fill(out.result || "");
     $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
-      .map(([k, d]) => `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
     const info = S.current.info;
     $("evInfo").style.display = info ? "block" : "none";
     $("evInfoText").textContent = fill(info || "");

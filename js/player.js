@@ -108,6 +108,7 @@
     const st = Logic.stageOf(child.age);
     $("stageTag").textContent = st.id;
     $("stageTag").style.background = st.color;
+    if (window.Pixel) $("childSprite").src = Pixel.sprite(st.id);
     $("childName").textContent = child.name;
     $("myRole").textContent = `${groupName(g)} · ${Logic.ROLES[role]}`;
     $("childAge").textContent = child.age;
@@ -160,7 +161,8 @@
     const card = $("eventModal").querySelector(".card");
     card.classList.toggle("mentor", p.mentor >= 0 && !p.res);
     const img = $("evImage");
-    if (ev.image) { img.src = ev.image; img.style.display = "block"; } else img.style.display = "none";
+    const pic = window.Pixel ? Pixel.forEvent(ev, st.id, p.mentor >= 0 && !p.res) : ev.image;
+    if (pic) { img.src = pic; img.style.display = "block"; } else img.style.display = "none";
 
     const box = $("evChoices"), msg = $("evMsg");
     box.innerHTML = ""; msg.textContent = "";
@@ -194,8 +196,8 @@
       $("evText").textContent = `선택: ${Logic.fill(c.text, ch.name)}${p.res.m ? " (🎓 교수님의 조언)" : ""}`;
       $("evResultText").textContent = Logic.fill(out.result || "", ch.name);
       const d = p.res.d;
-      $("evDeltas").innerHTML = (d ? `<span style="color:${d > 0 ? "#1f9d63" : "#d23c3c"}">가족 자산 ${d > 0 ? "+" : ""}${d}</span>` : "")
-        + (p.res.e ? `<span style="color:#1f9d63">📚 교육 기회 +1</span>` : "");
+      $("evDeltas").innerHTML = (d ? `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">가족 자산 ${d > 0 ? "+" : ""}${d}</span>` : "")
+        + (p.res.e ? `<span style="color:#2f8f5b">📚 교육 기회 +1</span>` : "");
       $("evInfo").style.display = ev.info ? "block" : "none";
       $("evInfoText").textContent = Logic.fill(ev.info || "", ch.name);
       $("evResult").style.display = "block";

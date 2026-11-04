@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>배움의 일생</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <!-- 시작 화면 -->
   <section id="startScreen" class="screen active">
     <div class="start-box">
+      <img id="lobbyArt" class="banner-art" alt="">
       <h1 id="gameTitle"></h1>
       <p id="gameSubtitle" class="subtitle"></p>
       <input id="nameInput" maxlength="8" placeholder="이름을 입력하세요 (비우면 무작위)">
@@ -81,6 +81,7 @@
   <script src="data/events_stage.js"></script>
   <script src="data/endings.js"></script>
   <!-- 게임 엔진 -->
+  <script src="js/pixel.js"></script>
   <script src="js/engine.js"></script>
 </body>
 </html>
