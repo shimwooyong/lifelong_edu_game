@@ -19,7 +19,8 @@ window.Pixel = (() => {
   const r = (x, y, w, h, c) => { x0.fillStyle = C[c] || c; x0.fillRect(x, y, w, h); };
   const shade = (x, y, w, h, a = 0.18) => r(x, y, w, h, `rgba(0,0,0,${a})`);
   const lite = (x, y, w, h, a = 0.35) => r(x, y, w, h, `rgba(255,255,255,${a})`);
-  const box = (x, y, w, h, c) => { r(x, y, w, h, "ink"); r(x + h_, y + h_, w - 2 * h_, h - 2 * h_, c); };
+  // 윤곽선은 항상 1칸(실제 2픽셀) 굵기로 통일, 안쪽 디테일만 0.5칸으로 세밀하게
+  const box = (x, y, w, h, c) => { r(x, y, w, h, "ink"); r(x + 1, y + 1, w - 2, h - 2, c); };
 
   // ── 조각 ──
   const sky = (c = "sky") => {
@@ -50,17 +51,17 @@ window.Pixel = (() => {
     shade(x + 4, y - 8, 1.5, 2.5, 0.15);
   };
   const win = (x, y, c = "win") => {
-    box(x, y, 5, 5, c); r(x + 2.5, y + h_, h_, 4, "ink"); r(x + h_, y + 2.5, 4, h_, "ink");
-    lite(x + 1, y + 1, 1, h_, 0.7); lite(x + 1, y + 1.5, h_, h_, 0.7);
+    box(x, y, 5, 5, c); shade(x + 1, y + 3, 3, 1, 0.12);
+    lite(x + 1, y + 1, 1.5, h_, 0.8); lite(x + 1, y + 1.5, h_, h_, 0.8);
   };
   const door = (x, y, c = "wood") => {
     box(x, y - 8, 6, 8, c); shade(x + 1, y - 7, 1.5, 3, 0.12); shade(x + 3.5, y - 7, 1.5, 3, 0.12);
     r(x + 4.5, y - 4, 1, 1, "sun"); lite(x + 4.5, y - 4, h_, h_, 0.6);
   };
-  const flatRoof = (x, y, w, c) => { r(x - 1, y - 3, w + 2, 3, "ink"); r(x - h_, y - 2.5, w + 1, 2, c); lite(x - h_, y - 2.5, w + 1, h_, 0.3); };
+  const flatRoof = (x, y, w, c) => { r(x - 1, y - 3, w + 2, 3, "ink"); r(x, y - 2, w, 2, c); lite(x, y - 2, w, h_, 0.3); shade(x, y - h_, w, h_, 0.15); };
   const peakRoof = (x, y, w, c) => { // 세모 지붕, y는 지붕 밑 (0.5 단위 계단으로 더 매끈하게)
     const hh = Math.ceil(w / 2);
-    for (let i = 0; i < hh; i += h_) { r(x + i - 1, y - i - h_, w - 2 * i + 2, h_, "ink"); r(x + i - h_, y - i - h_, Math.max(0, w - 2 * i + 1), h_, c); }
+    for (let i = 0; i < hh; i += h_) { r(x + i - 1, y - i - h_, w - 2 * i + 2, h_, "ink"); r(x + i, y - i - h_, Math.max(0, w - 2 * i), h_, c); }
     for (let i = 1; i < hh - 1; i += 2) r(x + i + 1, y - i - 1, w - 2 * i - 2, h_, `rgba(0,0,0,.12)`);
   };
   const building = (x, y, w, h, wall = "paper", roof = "red", rows = 1) => {
