@@ -1412,6 +1412,21 @@ window.Pixel = (() => {
       r(77, 40, 1, 6, "wood2"); r(76, 40, 3, 1, "sun");
       person(20, 54, { kind: "teen", shirt: "blue" }); person(40, 54, { kind: "adult", shirt: "orange" });
     },
+    // 브레이킹 뉴스 스튜디오
+    news() {
+      r(0, 0, W, H, "night2");
+      for (let i = 2; i < W; i += 10) r(i, 0, 5, 2, "red");
+      box(4, 7, 20, 15, "ink2"); r(6, 9, 16, 2, "sun"); r(6, 13, 12, 1, "lgray"); r(6, 16, 14, 1, "lgray"); r(6, 19, 9, 1, "lgray");
+      box(72, 7, 20, 15, "ink2"); r(74, 9, 16, 11, "lblue"); r(79, 11, 6, 6, "sun"); r(81, 13, 2, 2, "orange");
+      box(29, 4, 38, 24, "red"); r(31, 6, 34, 20, "red"); r(31, 6, 34, 2, "pink");
+      r(46, 9, 4, 9, "cream"); r(46, 20, 4, 3, "cream");
+      person(34, 46, { kind: "adult", shirt: "blue", tie: "red" });
+      person(57, 46, { kind: "adult", shirt: "purple", hair: "hair" });
+      box(18, 37, 60, 11, "blue"); r(20, 39, 56, 2, "lblue"); r(40, 42, 16, 4, "red"); r(44, 43, 8, 2, "cream");
+      r(0, 48, W, 8, "ink2");
+      r(0, 50, W, 6, "red"); r(0, 50, 16, 6, "sun"); r(3, 52, 10, 2, "red");
+      for (let i = 20; i < W - 4; i += 12) r(i, 52, 8, 1, "cream");
+    },
   };
 
   // 이벤트 → 장면

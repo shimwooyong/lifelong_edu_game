@@ -22,6 +22,9 @@
   }
 
   const groupName = (g) => g.replace("g", "") + "조";
+  // 방의 뉴스 정보 (Logic.advance에 넘김)
+  const newsCtx = () => ({ pick: root && root.config && root.config.news, done: (root && root.news && root.news.done) || {} });
+  const newsById = (k, id) => (typeof NEWS !== "undefined" && NEWS.slots[k] ? NEWS.slots[k].find((n) => n.id === id) : null);
   const membersOf = (grp) => (grp && grp.members) || {};
 
   // ── 조 목록 ──
@@ -112,6 +115,7 @@
     $("childName").textContent = child.name;
     $("myRole").textContent = `${groupName(g)} · ${Logic.ROLES[role]}`;
     $("childAge").textContent = child.age;
+    $("yearText").textContent = Logic.yearOf(G);
     $("parentAge").textContent = parent.age;
     $("stats").innerHTML = [
       ["가족 자산", G.asset, G.cls + " 출신"],
@@ -124,8 +128,8 @@
     // 기록
     const logEl = $("log");
     const atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 40;
-    logEl.innerHTML = G.log.map((l) => l.k === "stage"
-      ? `<div class="entry stage"><span class="y"></span><span class="t">${esc(l.t)}</span></div>`
+    logEl.innerHTML = G.log.map((l) => l.k === "stage" || l.k === "news"
+      ? `<div class="entry ${l.k}"><span class="y">${l.k === "news" ? Logic.birthYear() + l.y : ""}</span><span class="t">${esc(l.t)}</span></div>`
       : `<div class="entry ${l.k} ${l.w === "parent" ? "by-parent" : ""}"><span class="y">${l.w === "parent" ? "부모 " + (l.y + SETTINGS.multi.gap) : l.y}세</span><span class="t">${esc(l.t)}</span></div>`).join("");
     if (atBottom || !logEl.dataset.init) { logEl.scrollTop = logEl.scrollHeight; logEl.dataset.init = 1; }
 
@@ -136,9 +140,14 @@
       const who = Logic.deciders(G, t).map((r) => esc(mem[r] ? mem[r].name : Logic.ROLES[r])).join("·");
       return `<div>${Logic.TRACK[t]} 이벤트 「${esc(Logic.fill(ev.title, G.chars[t].name))}」 — ${p.res ? "결과 확인 중" : who + " 결정 중"}</div>`;
     }).join("");
-    $("nextBtn").disabled = tracks.length > 0;
-    $("nextBtn").textContent = tracks.length ? "⏳ 이벤트 진행 중" : "▶ 다음 이벤트";
-    $("nextBtn").onclick = () => act((G) => Logic.advance(G));
+    // 속보 대기: 이 조가 뉴스 시점에 도착했지만 아직 앵커가 발표하지 않음
+    const nc = newsCtx();
+    const waiting = G.waitNews != null && !(nc.done && nc.done[G.waitNews]);
+    if (waiting) $("statusLine").innerHTML = `<div class="news-wait">📡 곧 브레이킹 뉴스가 발표됩니다. 앵커를 주목하세요!</div>`;
+    $("nextBtn").disabled = tracks.length > 0 || waiting;
+    $("nextBtn").textContent = tracks.length ? "⏳ 이벤트 진행 중" : waiting ? "📡 속보 대기 중…" : "▶ 다음 이벤트";
+    $("nextBtn").classList.toggle("news-wait-btn", waiting);
+    $("nextBtn").onclick = () => act((G) => Logic.advance(G, newsCtx()));
 
     // 이벤트 창: 내가 결정할 것 → 자녀 이벤트 → 부모 이벤트 순으로 보여 줌
     const key = (t) => `${G.year}_${t}_${G.pending[t].ev}`;
@@ -155,7 +164,7 @@
     const st = Logic.stageOf(ch.age);
     $("evStage").textContent = `${Logic.TRACK[track]} · ${st.id}`;
     $("evStage").style.background = st.color;
-    $("evAge").textContent = `${Logic.TRACK[track]} ${ch.age}세`;
+    $("evAge").textContent = `${Logic.TRACK[track]} ${ch.age}세 · ${Logic.yearOf(G)}년`;
     $("evTitle").textContent = Logic.fill(ev.title, ch.name);
     $("evText").textContent = Logic.fill(ev.text, ch.name);
     const card = $("eventModal").querySelector(".card");
@@ -197,7 +206,8 @@
       $("evResultText").textContent = Logic.fill(out.result || "", ch.name);
       const d = p.res.d;
       $("evDeltas").innerHTML = (d ? `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">가족 자산 ${d > 0 ? "+" : ""}${d}</span>` : "")
-        + (p.res.e ? `<span style="color:#2f8f5b">📚 교육 기회 +1</span>` : "");
+        + (p.res.e ? `<span style="color:#2f8f5b">📚 교육 기회 +1</span>` : "")
+        + (p.res.n ? `<span class="news-delta">📰 뉴스 영향 ${p.res.n > 0 ? "+" : ""}${p.res.n} · ${esc(p.res.nn)}</span>` : "");
       $("evInfo").style.display = ev.info ? "block" : "none";
       $("evInfoText").textContent = Logic.fill(ev.info || "", ch.name);
       $("evResult").style.display = "block";
@@ -224,12 +234,50 @@
     $("endStats").innerHTML = [["가족 자산", G.asset], ["자녀 교육", G.chars.child.edu.length + "번"], ["부모 교육", G.chars.parent.edu.length + "번"]]
       .map(([k, v]) => `<div class="stat"><div class="name">${k}<b>${v}</b></div></div>`).join("");
     const list = (ch) => ch.edu.length ? ch.edu.map((e) => `<li><small>${e.age}세</small>${esc(e.name)}</li>`).join("") : "<li>받은 교육이 없습니다.</li>";
+    // 배운 이유
+    const m = Logic.motiveCounts(G), tot = m.외적 + m.내적 || 1;
+    $("endMotive").innerHTML = `<div class="motive-bar"><div class="ext" style="width:${(m.외적 / tot) * 100}%"></div><div class="int" style="width:${(m.내적 / tot) * 100}%"></div></div>
+      <div class="motive-legend"><span class="ext">■ 외적 동기(시험·자격·취업·학위) ${m.외적}번</span><span class="int">■ 내적 동기(관심·체험·나눔) ${m.내적}번</span></div>`;
+    $("endNews").innerHTML = Object.keys(G.newsSeen).sort().map((k) => {
+      const n = newsById(+k, G.newsSeen[k]), a = G.afterNews[k];
+      return n ? `<li><small>${NEWS.birthYear + NEWS.ages[k]}년</small>${esc(n.headline)}${a ? `<br><small>→ 그 뒤 첫 선택: ${esc(a.c)}</small>` : ""}</li>` : "";
+    }).join("") || "<li>겪은 뉴스가 없습니다.</li>";
     $("eduChild").innerHTML = list(G.chars.child);
     $("eduParent").innerHTML = list(G.chars.parent);
   }
 
   // ── 전체 그리기 ──
+  // 브레이킹 뉴스 배너: 생방송 중이면 모두에게, 끝난 뒤엔 우리 조에 반영될 때 한 번 더(우리 가족의 변화)
+  function renderNews(s, grp) {
+    if (!window.Breaking || typeof NEWS === "undefined") return;
+    const cfg = root && root.config, live = root && root.news && root.news.live;
+    const inRoom = s && cfg && s.room === cfg.id;
+    if (inRoom && typeof live === "number" && cfg.news) {
+      return Breaking.show(Logic.newsItem(cfg.news, live), live, { live: true });
+    }
+    const G = grp && grp.game && Logic.normalize(grp.game);
+    if (inRoom && G) {
+      const key = `mp_newscard_${cfg.id}_${s.g}`;
+      const seen = store.get(key) || {};
+      const k = Object.keys(G.newsSeen).find((x) => !seen[x]);
+      if (k !== undefined) {
+        const item = newsById(+k, G.newsSeen[k]);
+        const i = G.log.findIndex((l) => l.k === "news" && l.t.includes(item.headline));
+        const nx = G.log[i + 1];
+        const shock = nx && nx.k === "news" && nx.t.startsWith("📰 뉴스 영향") ? nx.t.replace("📰 뉴스 영향: ", "우리 가족에게 온 변화 → ") : "";
+        return Breaking.show(item, +k, { live: false, shock, onClose: () => { seen[k] = 1; store.set(key, seen); render(); } });
+      }
+    }
+    Breaking.hide();
+  }
+
   function render() {
+    renderMain();
+    const s = seat(), cfg = root && root.config;
+    renderNews(s, s && cfg && root.groups && root.groups[s.g]);
+  }
+
+  function renderMain() {
     const s = seat();
     const cfg = root && root.config;
     const grp = s && cfg && s.room === cfg.id && root.groups && root.groups[s.g];

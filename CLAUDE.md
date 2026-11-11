@@ -5,7 +5,10 @@
 ## 구조 (빌드 없음)
 - **조별 멀티플레이(메인)**: `index.html`(학생) + `admin.html`(관리자). `js/net.js`(Firebase 또는 로컬 테스트), `js/logic.js`(규칙), `js/player.js`, `js/admin.js`, `css/multi.css`, `js/firebase-config.js`(설정·관리자 비번).
   - 한 조=한 가족: 부모 1·2, 자녀 1·2. 자녀 1명(0→60세), 부모(30→90세). 자녀 30세 전엔 부모 둘이, 이후엔 자녀 둘이 자녀 선택. 자녀 30세부터 부모 이벤트(부모 나이 60~90)도 동시 진행, 부모 둘이 결정. 둘이 같은 선택지를 골라야 확정. 가족 자산 하나 공유. 엔딩은 자녀 좋은 교육 수 × endingScale(settings.js multi).
-  - 새 데이터 파일은 index.html, admin.html, 혼자하기.html 세 곳의 script 목록에 추가.
+  - 새 데이터 파일은 index.html, admin.html, 혼자하기.html 세 곳의 script 목록에 추가. (단 `data/news.js`는 조별 게임 전용: index·admin·anchor에만)
+  - **브레이킹 뉴스**: `data/news.js`(뉴스 5시점×후보, 효과 mods/shock/mentor, 뉴스 세상 전용 이벤트 requires.world, 토론 질문), `anchor.html`+`js/anchor.js`(앵커 원고·송출, 비번 ANCHOR_PASSWORD), `js/breaking.js`(긴급 배너). 방 만들 때 config.news에 후보 번호 저장, 송출 상태는 news/live·news/done. 조가 뉴스 시점에 먼저 도착하면 G.waitNews로 대기.
+  - 관리자 '📊 결과 비교' 탭: 자산 그래프(G.hist)·엔딩·배운 이유(외적/내적, logic.js motiveOf)·뉴스 직후 첫 선택(G.afterNews)·토론 질문.
+  - 테스트: 주소 뒤 `?local`(서버 대신 브라우저 안), 학생 여러 명은 `?local&p=1`처럼.
 - **혼자하기.html**: 예전 1인용(js/engine.js). 모바일용.html은 이걸 합친 파일. 백업: `백업/v1_혼자하기`, git 태그 v1-solo.
 - `data/` 게임 내용. 사용자 스크립트는 여기만 고친다.
   - `settings.js` 능력치·기본값·BGM / `stages.js` 시기와 일상 문장 / `events.js` 이벤트 / `endings.js` 엔딩

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>배움의 일생</title>
   <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1793798914">
-  <link rel="stylesheet" href="css/multi.css?v=1793798914">
+  <link rel="stylesheet" href="css/style.css?v=1794388371">
+  <link rel="stylesheet" href="css/multi.css?v=1794388371">
 </head>
 <body>
   <!-- 조 고르기 -->
@@ -51,6 +51,7 @@
         <span id="myRole" class="tag me"></span>
       </div>
       <div class="ages">
+        <div class="year-box"><span id="yearText">2026</span><small>년</small></div>
         <div class="age"><small>자녀</small><span id="childAge">0</span><small>세</small></div>
         <div class="age sub-age"><small>부모</small><span id="parentAge">30</span><small>세</small></div>
       </div>
@@ -71,6 +72,10 @@
       <h2 id="endTitle"></h2>
       <p id="endText" class="end-text"></p>
       <div id="endStats" class="stats"></div>
+      <h3>우리 가족이 배운 이유</h3>
+      <div id="endMotive" class="motive"></div>
+      <h3>우리 가족이 겪은 뉴스</h3>
+      <ul id="endNews" class="edu-list news-list"></ul>
       <h3>자녀의 평생교육 이력</h3>
       <ul id="eduChild" class="edu-list"></ul>
       <h3>부모님의 평생교육 이력</h3>
@@ -102,23 +107,48 @@
     </div>
   </div>
 
+  <!-- 브레이킹 뉴스 -->
+  <div id="breaking" class="breaking">
+    <div class="bk-flash"></div>
+    <div class="bk-stripes"></div>
+    <div class="bk-box">
+      <div class="bk-top">
+        <span class="bk-label"><span class="bk-dot"></span>속보</span>
+        <span class="bk-en">BREAKING NEWS</span>
+        <span id="bkLive" class="bk-live">● LIVE</span>
+      </div>
+      <img id="bkArt" class="bk-art" alt="">
+      <div id="bkDate" class="bk-date"></div>
+      <h1 id="bkHead" class="bk-head"></h1>
+      <div class="bk-changes-title">▼ 이 뉴스로 바뀌는 세상</div>
+      <ul id="bkChanges" class="bk-changes"></ul>
+      <div id="bkShock" class="bk-shock"></div>
+      <button id="bkClose" class="btn bk-btn">확인했어요</button>
+      <p id="bkWait" class="bk-wait">앵커의 뉴스를 들어 주세요…</p>
+    </div>
+    <div class="bk-stripes bottom"></div>
+    <div class="bk-ticker"><span class="bk-tk-label">속보</span><div class="bk-tk-track"><div id="bkTicker" class="bk-tk-text"></div></div></div>
+  </div>
+
   <!-- 서버 -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js?v=1793798914"></script>
-  <script src="js/net.js?v=1793798914"></script>
+  <script src="js/firebase-config.js?v=1794388371"></script>
+  <script src="js/net.js?v=1794388371"></script>
   <!-- 게임 데이터: 새 스크립트 파일은 여기와 admin.html, 혼자하기.html에 추가 -->
-  <script src="data/settings.js?v=1793798914"></script>
-  <script src="data/stages.js?v=1793798914"></script>
-  <script src="data/events.js?v=1793798914"></script>
-  <script src="data/events_more.js?v=1793798914"></script>
-  <script src="data/events_random.js?v=1793798914"></script>
-  <script src="data/events_stage.js?v=1793798914"></script>
-  <script src="data/events_late.js?v=1793798914"></script>
-  <script src="data/endings.js?v=1793798914"></script>
+  <script src="data/settings.js?v=1794388371"></script>
+  <script src="data/stages.js?v=1794388371"></script>
+  <script src="data/events.js?v=1794388371"></script>
+  <script src="data/events_more.js?v=1794388371"></script>
+  <script src="data/events_random.js?v=1794388371"></script>
+  <script src="data/events_stage.js?v=1794388371"></script>
+  <script src="data/events_late.js?v=1794388371"></script>
+  <script src="data/news.js?v=1794388371"></script>
+  <script src="data/endings.js?v=1794388371"></script>
   <!-- 게임 -->
-  <script src="js/logic.js?v=1793798914"></script>
-  <script src="js/pixel.js?v=1793798914"></script>
-  <script src="js/player.js?v=1793798914"></script>
+  <script src="js/logic.js?v=1794388371"></script>
+  <script src="js/pixel.js?v=1794388371"></script>
+  <script src="js/breaking.js?v=1794388371"></script>
+  <script src="js/player.js?v=1794388371"></script>
 </body>
 </html>

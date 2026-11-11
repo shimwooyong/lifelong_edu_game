@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>배움의 일생 · 앵커</title>
+  <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=1794388371">
+  <link rel="stylesheet" href="css/multi.css?v=1794388371">
+</head>
+<body class="anchor-page">
+  <!-- 비밀번호 -->
+  <section id="gate" class="screen active">
+    <div class="pad center">
+      <h1 class="logo">🎙 앵커 데스크</h1>
+      <p class="muted">브레이킹 뉴스를 발표하는 앵커 화면입니다</p>
+      <input id="pw" type="password" placeholder="앵커 비밀번호">
+      <button id="pwBtn" class="btn primary">들어가기</button>
+      <p id="pwMsg" class="muted"></p>
+    </div>
+  </section>
+
+  <!-- 앵커 화면 -->
+  <section id="desk" class="screen">
+    <div class="pad">
+      <div class="anchor-head">
+        <span class="bk-label"><span class="bk-dot"></span>속보</span>
+        <b>앵커 데스크</b>
+        <span id="onAir" class="on-air">OFF AIR</span>
+      </div>
+      <div id="slotList" class="slot-list"></div>
+      <div id="script" class="script-box"></div>
+    </div>
+  </section>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js?v=1794388371"></script>
+  <script src="js/net.js?v=1794388371"></script>
+  <script src="data/settings.js?v=1794388371"></script>
+  <script src="data/news.js?v=1794388371"></script>
+  <script src="js/pixel.js?v=1794388371"></script>
+  <script src="js/anchor.js?v=1794388371"></script>
+</body>
+</html>

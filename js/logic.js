@@ -11,6 +11,8 @@ const Logic = (() => {
     if (!G) return G;
     G.log = G.log || [];
     G.pending = G.pending || {};
+    G.world = G.world || {}; G.newsSeen = G.newsSeen || {}; G.hist = G.hist || []; G.afterNews = G.afterNews || {};
+    if (G.waitNews === undefined) G.waitNews = null;
     for (const k of ["child", "parent"]) {
       const c = G.chars[k];
       c.flags = c.flags || {}; c.done = c.done || {}; c.edu = c.edu || [];
@@ -46,7 +48,67 @@ const Logic = (() => {
     if (req.eduCount && ch.edu.length < req.eduCount) return false;
     if (req.goodEdu && goodEdu(ch) < req.goodEdu) return false;
     if (req.maxGoodEdu != null && goodEdu(ch) > req.maxGoodEdu) return false;
+    for (const f of req.world || []) if (!(G.world && G.world[f])) return false;
+    for (const f of req.notWorld || []) if (G.world && G.world[f]) return false;
     return true;
+  }
+
+  // ── 브레이킹 뉴스 ──
+  const hasNews = () => typeof NEWS !== "undefined";
+  const birthYear = () => (hasNews() ? NEWS.birthYear : 2026);
+  const yearOf = (G) => birthYear() + (G ? G.year : 0);
+  const newsSlotAt = (age) => (hasNews() ? NEWS.ages.indexOf(age) : -1);
+  // pick: 방마다 정한 후보 번호 목록
+  const newsItem = (pick, k) => (hasNews() && pick && NEWS.slots[k] ? NEWS.slots[k][pick[k] || 0] : null);
+  const worldItem = (id) => { if (!hasNews()) return null; for (const s of NEWS.slots) for (const n of s) if (n.id === id) return n; return null; };
+
+  function applyNews(G, k, item) {
+    G.world[item.id] = true;
+    G.newsSeen[k] = item.id;
+    const at = NEWS.ages[k];
+    addLog(G, `📰 ${birthYear() + at}년 속보: ${item.headline}`, "news");
+    G.log[G.log.length - 1].y = at;
+    const sh = item.shock ? item.shock(G) : null;
+    if (sh && sh.asset) {
+      G.asset = Math.max(0, Math.round(G.asset + sh.asset));
+      addLog(G, `📰 뉴스 영향: 가족 자산 ${sh.asset > 0 ? "+" : ""}${sh.asset} (${sh.note})`, "news");
+      G.log[G.log.length - 1].y = at;
+      G.hist.push([at, G.asset]);
+    }
+    G.newsJust = k;
+  }
+
+  // 뉴스가 바꾼 세상에서의 추가 자산 효과
+  function worldMods(G, ev, c, ch, base) {
+    let add = 0; const notes = [];
+    for (const id in G.world) {
+      const n = worldItem(id);
+      for (const m of (n && n.mods) || []) {
+        if (!m.test(ev, c, ch, G)) continue;
+        const a = typeof m.asset === "function" ? m.asset(base) : m.asset;
+        if (a) { add += a; notes.push(m.note); }
+      }
+    }
+    return { add, notes };
+  }
+  // 멘토링 최고 선택이 뉴스로 바뀌었는지
+  function mentorSwap(G, evId) {
+    for (const id in G.world) { const n = worldItem(id); if (n && n.mentor && n.mentor[evId]) return { id, ...n.mentor[evId] }; }
+    return null;
+  }
+
+  // 배운 이유: 외적 동기(시험·자격·취업·학위) / 내적 동기(관심·체험·나눔) / 기본 학교(구분 안 함)
+  function motiveOf(c, eduName) {
+    if (c.motive) return c.motive;
+    const s = (eduName || "") + " " + (c.text || "");
+    if (/어린이집|유치원|초등학교|일반 고등학교|특성화고|4년제 대학교|전문대학$/.test(eduName || "")) return "기본";
+    if (/학원|자격|시험|선행|재수|특목|특수목적|컨설팅|취업|직업훈련|직무|학위|대학원|학점은행|방송통신|사이버|편입|검정고시|교환학생|일학습병행|신입사원|전직|요양보호사|재교육|장학/.test(s)) return "외적";
+    return "내적";
+  }
+  function motiveCounts(G) {
+    const m = { 외적: 0, 내적: 0, 기본: 0 };
+    for (const k of ["child", "parent"]) for (const e of G.chars[k].edu) m[e.motive || "내적"]++;
+    return m;
   }
 
   // {이름} + 조사 처리
@@ -76,9 +138,11 @@ const Logic = (() => {
       year: 0, asset: Math.round(cls.asset * spread), cls: cls.name,
       chars: { child: mk(childName, 0), parent: mk("부모님", M().gap) },
       log: [], pending: {}, ended: false, stage: stageOf(0).id,
+      world: {}, newsSeen: {}, hist: [], afterNews: {}, waitNews: null,
     };
+    G.hist.push([0, G.asset]);
     addLog(G, `── 자녀 ${G.stage} ──`, "stage");
-    addLog(G, fill(`{이름}이(가) ${cls.text}에서 태어났다. (${cls.name}, 가족 자산 ${G.asset})`, childName));
+    addLog(G, fill(`{이름}이(가) ${birthYear()}년, ${cls.text}에서 태어났다. (${cls.name}, 가족 자산 ${G.asset})`, childName));
     return G;
   }
 
@@ -103,7 +167,10 @@ const Logic = (() => {
     const p = { ev: ev.id, order: [], locked: [], mentor: -1, votes: {}, ack: {} };
 
     // 교육 멘토링: 인생 양끝 구간 제외, 시기당 한 번 확률 검사
-    const best = idx.find((i) => ev.choices[i].mentor);
+    const sw = mentorSwap(G, ev.id);
+    const swIdx = sw ? idx.find((i) => ev.choices[i].text.includes(sw.pick)) : undefined;
+    const best = swIdx !== undefined ? swIdx : idx.find((i) => ev.choices[i].mentor);
+    if (swIdx !== undefined) p.msw = sw.id;
     const MM = SETTINGS.mentoring, st = stageOf(ch.age);
     const edge = SETTINGS.maxAge * ((MM && MM.edge) || 0);
     if (best !== undefined && MM && ch.age >= edge && ch.age <= SETTINGS.maxAge - edge && !ch.mentorRolled[st.id]) {
@@ -120,9 +187,17 @@ const Logic = (() => {
   }
 
   // 다음 이벤트가 나올 때까지 해를 넘긴다
-  function advance(G) {
+  // news: { pick: 방의 뉴스 후보 번호, done: 발표가 끝난 뉴스 } — 없으면 뉴스 없이 진행
+  function advance(G, news) {
     if (G.ended || Object.keys(G.pending).length) return G;
     for (;;) {
+      const k = newsSlotAt(G.year + 1);
+      if (k >= 0 && news && news.pick && G.newsSeen[k] === undefined) {
+        const item = newsItem(news.pick, k);
+        if (item && !(news.done && news.done[k])) { G.waitNews = k; return G; } // 앵커 발표를 기다림
+        if (item) applyNews(G, k, item);
+      }
+      G.waitNews = null;
       G.year++;
       const c = G.chars.child, pa = G.chars.parent;
       c.age = G.year; pa.age = G.year + M().gap;
@@ -142,16 +217,21 @@ const Logic = (() => {
   function resultOf(p) {
     const ev = evById(p.ev), c = ev.choices[p.res.c];
     let out = c;
-    if (p.res.m) out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
+    if (p.res.m) out = mentorOut(p, c);
     else if (p.res.o >= 0) out = c.outcomes[p.res.o];
     return { ev, c, out };
+  }
+  function mentorOut(p, c) {
+    const sw = p.msw && worldItem(p.msw) && worldItem(p.msw).mentor[p.ev];
+    const m = sw || c.mentor || {};
+    return { ...c, effects: m.effects || c.effects, result: m.result || c.result };
   }
 
   function resolve(G, track, i) {
     const p = G.pending[track], ev = evById(p.ev), c = ev.choices[i], ch = G.chars[track];
     const mentored = p.mentor >= 0;
     let out = c, oi = -1;
-    if (mentored) out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
+    if (mentored) out = mentorOut(p, c);
     else if (c.outcomes) {
       const ws = c.outcomes.map((o) => weighted(G, o.chance, toneOf(o)));
       let r = Math.random() * ws.reduce((a, b) => a + b, 0);
@@ -160,12 +240,20 @@ const Logic = (() => {
       out = c.outcomes[oi];
     }
     const before = G.asset;
-    G.asset = Math.max(0, Math.round(before + (((out.effects || {}).자산) || 0)));
+    const base = ((out.effects || {}).자산) || 0;
+    const wm = worldMods(G, ev, c, ch, base);
+    G.asset = Math.max(0, Math.round(before + base + wm.add));
+    G.hist.push([G.year, G.asset]);
     for (const f of [].concat(c.flags || [], out.flags || [])) ch.flags[f] = true;
     const eduName = out.edu !== undefined ? out.edu : c.edu;
     const good = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
-    if (eduName) ch.edu.push({ age: ch.age, name: fill(eduName, ch.name), good });
-    p.res = { c: i, o: oi, d: G.asset - before, e: eduName ? 1 : 0, m: mentored ? 1 : 0 };
+    if (eduName) ch.edu.push({ age: ch.age, name: fill(eduName, ch.name), good, motive: motiveOf(c, eduName) });
+    p.res = { c: i, o: oi, d: G.asset - before, e: eduName ? 1 : 0, m: mentored ? 1 : 0, n: wm.add, nn: wm.notes.join(", ") };
+    // 뉴스 직후 첫 선택 기록 (결과 비교용)
+    if (G.newsJust != null) {
+      G.afterNews[G.newsJust] = { w: track, ev: fill(ev.title, ch.name), c: fill(c.text, ch.name) };
+      G.newsJust = null;
+    }
     addLog(G, `${mentored ? "🎓 교육 멘토링 · " : ""}${fill(ev.title, ch.name)} → ${fill(c.text, ch.name)}`, "event", track);
   }
 
@@ -204,5 +292,6 @@ const Logic = (() => {
     addLog(G, `자녀가 ${G.year}세가 되었다. 게임 끝!`, "stage");
   }
 
-  return { ROLES, TRACK, normalize, newGame, advance, vote, ack, deciders, resultOf, evById, stageOf, fill, goodEdu };
+  return { ROLES, TRACK, normalize, newGame, advance, vote, ack, deciders, resultOf, evById, stageOf, fill, goodEdu,
+    yearOf, birthYear, newsItem, motiveCounts };
 })();

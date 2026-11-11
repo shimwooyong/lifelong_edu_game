@@ -10,6 +10,8 @@
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === "panel"));
     $("modeTag").textContent = Net.mode === "firebase" ? "온라인(Firebase)" : "로컬 테스트 모드";
     $("joinUrl").textContent = location.href.replace(/admin\.html.*$/, "");
+    $("anchorUrl").textContent = location.href.replace(/admin\.html.*$/, "anchor.html");
+    $("anchorPw").textContent = window.ANCHOR_PASSWORD || "";
     Net.on("", (d) => { root = d; render(); });
   }
   $("pwBtn").onclick = () => {
@@ -31,7 +33,9 @@
     }
     const groups = {};
     for (let i = 1; i <= n; i++) groups["g" + i] = { status: "waiting", cls: cls[i - 1] };
-    Net.set("", { config: { id: Date.now(), count: n }, groups });
+    // 이번 방에서 터질 뉴스: 시기마다 후보 중 하나를 무작위로 (반 전체가 같은 뉴스를 겪음)
+    const news = typeof NEWS !== "undefined" ? NEWS.slots.map((s) => Math.floor(Math.random() * s.length)) : null;
+    Net.set("", { config: { id: Date.now(), count: n, news }, groups });
   };
 
   function start(g) {
@@ -50,9 +54,90 @@
     ready.forEach((g) => start(g));
   };
 
+  // ── 탭 ──
+  let tab = "prog";
+  $("tabProg").onclick = () => { tab = "prog"; render(); };
+  $("tabCmp").onclick = () => { tab = "cmp"; render(); };
+
+  // ── 브레이킹 뉴스 송출판 (앵커 화면과 같은 기능, 비상용) ──
+  function renderNews() {
+    const cfg = root.config, nw = root.news || {}, done = nw.done || {}, live = nw.live;
+    if (typeof NEWS === "undefined" || !cfg.news) { $("newsPanel").innerHTML = `<p class="muted">이 방은 뉴스 없이 만들어졌어요. 새 방을 만들면 뉴스가 들어갑니다.</p>`; return; }
+    const gs = root.groups || {};
+    $("newsPanel").innerHTML = NEWS.ages.map((age, k) => {
+      const it = Logic.newsItem(cfg.news, k);
+      const wait = Object.values(gs).filter((g) => g.game && g.game.waitNews === k).length;
+      const st = live === k ? "on" : done[k] ? "done" : "";
+      const btn = live === k ? `<button class="btn" data-end="${k}">■ 방송 종료</button>`
+        : done[k] ? `<span>✔ 발표 끝</span>` : `<button class="btn red" data-air="${k}">🔴 속보 송출</button>`;
+      return `<div class="news-slot ${st}"><div><b>${NEWS.birthYear + age}년</b> · 자녀 ${age}세</div>
+        <div>${esc(it.headline)}</div><div>📡 대기 중인 조: <b>${wait}</b></div>${btn}</div>`;
+    }).join("");
+    $("newsPanel").querySelectorAll("[data-air]").forEach((b) => (b.onclick = () => Net.set("news/live", +b.dataset.air)));
+    $("newsPanel").querySelectorAll("[data-end]").forEach((b) => (b.onclick = () => {
+      const k = +b.dataset.end;
+      Net.set(`news/done/${k}`, true).then(() => Net.set("news/live", null));
+    }));
+  }
+
+  // ── 결과 비교 ──
+  const COLORS = ["#e8202a", "#3b5dc9", "#2f8f5b", "#ef7d57", "#7a4c9e", "#257179", "#b08a5a", "#41a6f6", "#b13e53", "#241f2e"];
+  function renderCompare() {
+    const gs = root.groups || {}, cfg = root.config;
+    const list = order(gs).filter((g) => gs[g].game).map((g) => ({ g, G: Logic.normalize(gs[g].game) }));
+    if (!list.length) { $("cmpView").innerHTML = `<p class="muted">아직 시작한 조가 없어요.</p>`; return; }
+    const end = SETTINGS.multi.childEnd;
+    const maxA = Math.max(100, ...list.flatMap(({ G }) => G.hist.map((h) => h[1]))) * 1.08;
+    const W = 860, H = 320, L = 48, R = 14, T = 16, B = 34;
+    const x = (v) => L + (v / end) * (W - L - R), y = (a) => T + (1 - a / maxA) * (H - T - B);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" font-family="Galmuri11, monospace" font-size="11">`;
+    for (let i = 0; i <= 4; i++) { const a = Math.round((maxA / 4) * i); svg += `<line x1="${L}" x2="${W - R}" y1="${y(a)}" y2="${y(a)}" stroke="#d9c39b" stroke-width="1"/><text x="${L - 6}" y="${y(a) + 4}" text-anchor="end" fill="#6b6478">${a}</text>`; }
+    for (let a = 0; a <= end; a += 10) svg += `<text x="${x(a)}" y="${H - 14}" text-anchor="middle" fill="#6b6478">${Logic.birthYear() + a}</text>`;
+    if (typeof NEWS !== "undefined" && cfg.news) NEWS.ages.forEach((age, k) => {
+      const it = Logic.newsItem(cfg.news, k);
+      svg += `<line x1="${x(age)}" x2="${x(age)}" y1="${T}" y2="${H - B}" stroke="#e8202a" stroke-width="2" stroke-dasharray="4 4"/>
+        <text x="${x(age) + 4}" y="${T + 10}" fill="#c0182a" font-weight="700">${esc(it.id)}</text>`;
+    });
+    list.forEach(({ G }, i) => {
+      const pts = [];
+      G.hist.forEach(([yr, a], j) => { if (j) pts.push(`${x(yr)},${y(G.hist[j - 1][1])}`); pts.push(`${x(yr)},${y(a)}`); });
+      if (G.hist.length) pts.push(`${x(G.year)},${y(G.asset)}`);
+      svg += `<polyline points="${pts.join(" ")}" fill="none" stroke="${COLORS[i % COLORS.length]}" stroke-width="3"/>`;
+    });
+    svg += `<line x1="${L}" x2="${L}" y1="${T}" y2="${H - B}" stroke="#241f2e" stroke-width="2"/><line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="#241f2e" stroke-width="2"/></svg>`;
+    const legend = list.map(({ g, G }, i) => `<span style="color:${COLORS[i % COLORS.length]}">■ ${g.slice(1)}조 (${esc(G.cls)})</span>`).join("");
+
+    const rows = list.map(({ g, G }, i) => {
+      const c = G.chars.child, m = Logic.motiveCounts(G), tot = m.외적 + m.내적 || 1;
+      const start = G.hist.length ? G.hist[0][1] : G.asset;
+      const after = Object.keys(G.afterNews).sort().map((k) => `<div><small>${Logic.birthYear() + NEWS.ages[k]}</small> ${esc(G.afterNews[k].c)}</div>`).join("") || "—";
+      return `<tr>
+        <td><b style="color:${COLORS[i % COLORS.length]}">${g.slice(1)}조</b><br><small>${esc(c.name)}네</small></td>
+        <td>${esc(G.cls)}</td>
+        <td class="num">${start} → <b>${G.asset}</b></td>
+        <td>${G.ended ? `<b>${esc(G.ending && G.ending.title)}</b>` : `진행 중 (자녀 ${c.age}세)`}</td>
+        <td class="num">${Logic.goodEdu(c)}가지</td>
+        <td class="num">${c.edu.length} / ${G.chars.parent.edu.length}</td>
+        <td>외적 ${m.외적} · 내적 ${m.내적}<div class="mini-motive"><div class="ext" style="width:${(m.외적 / tot) * 100}%"></div><div class="int" style="width:${(m.내적 / tot) * 100}%"></div></div></td>
+        <td>${after}</td></tr>`;
+    }).join("");
+    const qs = typeof NEWS !== "undefined" ? NEWS.discuss : [];
+    $("cmpView").innerHTML = `
+      <div class="compare-chart"><b>가족 자산의 변화</b> <span class="muted">(빨간 점선 = 브레이킹 뉴스)</span>${svg}<div class="compare-legend">${legend}</div></div>
+      <div class="compare-table-wrap"><table class="compare-table">
+        <tr><th>조</th><th>소득분위</th><th>자산 (시작→지금)</th><th>엔딩</th><th>자녀 좋은 교육</th><th>받은 교육 (자녀/부모)</th><th>배운 이유</th><th>뉴스 직후 첫 선택</th></tr>
+        ${rows}</table></div>
+      <div class="discuss"><h3>💬 함께 이야기해 봐요</h3><ol>${qs.map((q) => `<li>${esc(q)}</li>`).join("")}</ol></div>`;
+  }
+
   function render() {
     const gs = (root && root.groups) || {};
-    if (!root || !root.config) { $("groups").innerHTML = `<p class="muted">아직 방이 없어요. 조 수를 입력하고 '새 게임 방 만들기'를 누르세요.</p>`; return; }
+    $("tabProg").classList.toggle("on", tab === "prog"); $("tabCmp").classList.toggle("on", tab === "cmp");
+    $("progView").style.display = tab === "prog" ? "" : "none";
+    $("cmpView").style.display = tab === "cmp" ? "" : "none";
+    if (!root || !root.config) { $("newsPanel").innerHTML = ""; $("groups").innerHTML = `<p class="muted">아직 방이 없어요. 조 수를 입력하고 '새 게임 방 만들기'를 누르세요.</p>`; return; }
+    renderNews();
+    if (tab === "cmp") renderCompare();
     $("groupCount").value = root.config.count;
     $("groups").innerHTML = order(gs).map((g) => {
       const grp = gs[g], mem = grp.members || {};
@@ -75,12 +160,14 @@
         }).join("");
         const last = G.log.filter((l) => l.k === "event").slice(-3).reverse()
           .map((l) => `<li>${l.w === "parent" ? "부모" : "자녀"} ${l.w === "parent" ? l.y + SETTINGS.multi.gap : l.y}세 · ${esc(l.t)}</li>`).join("");
+        const nwDone = (root.news && root.news.done) || {};
+        const waitTxt = G.waitNews != null && !nwDone[G.waitNews] ? `<div class="pend news-wait">📡 속보 대기 중</div>` : "";
         body = `<div class="nums">
-            <span>자녀 <b>${c.age}</b>세</span><span>부모 <b>${p.age}</b>세</span>
+            <span><b>${Logic.yearOf(G)}</b>년</span><span>자녀 <b>${c.age}</b>세</span><span>부모 <b>${p.age}</b>세</span>
             <span><b>${G.cls}</b></span><span>자산 <b>${G.asset}</b></span>
             <span>자녀 좋은 교육 <b>${Logic.goodEdu(c)}</b>가지</span>
           </div>
-          ${G.ended ? `<div class="pend">🏁 엔딩: <b>${esc(G.ending && G.ending.title)}</b></div>` : pend || `<div class="pend muted">다음 이벤트 대기 중</div>`}
+          ${G.ended ? `<div class="pend">🏁 엔딩: <b>${esc(G.ending && G.ending.title)}</b></div>` : pend || waitTxt || `<div class="pend muted">다음 이벤트 대기 중</div>`}
           <ul class="mini-log">${last}</ul>`;
       }
       const tag = grp.status === "waiting" ? "대기" : grp.status === "playing" ? "진행 중" : "끝";
