@@ -33,7 +33,7 @@ window.Breaking = (() => {
       const tk = `${item.ticker}  ▶  ${item.headline}  ▶  `;
       $("bkTicker").textContent = tk + tk;
       el.classList.remove("open"); void el.offsetWidth; el.classList.add("open");
-      if (o.live) beep();
+      if (o.live) { beep(); if (window.BGM) BGM.duck(4); }
     }
     el.classList.toggle("live", !!o.live);
     $("bkLive").style.display = o.live ? "" : "none";

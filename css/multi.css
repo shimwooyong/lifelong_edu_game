@@ -238,3 +238,5 @@ body.anchor-page { background: #120a0e; background-image: repeating-linear-gradi
 .feed-head b { color: var(--ink); font-size: 16px; }
 .feed-pick { font-weight: 700; }
 .feed-info { background: var(--paper2); border: 2px dashed var(--ink); padding: 6px 8px; margin-top: 6px; font-size: 14px; }
+/* 배경음악 버튼 */
+.bgm-btn { position: fixed; right: 12px; bottom: 124px; z-index: 40; font-size: 13px; padding: 6px 10px; }
