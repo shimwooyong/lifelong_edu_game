@@ -37,40 +37,49 @@ window.BGM = (() => {
   // 멜로디 음 길이: 다음 음이 나올 때까지(최대 4칸)
   const holdOf = (i) => { let n = 1; while (n < 4 && MELODY[(i + n) % MELODY.length] === _) n++; return n; };
 
-  // ── 속보 테마: 단조, 빠른 박자, 경보음 같은 멜로디 (브레이킹 뉴스가 떠 있는 동안) ──
-  const NSTEP = 60 / 152 / 2; // 152BPM 8분음표
-  const N_CHORDS = [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59]]; // Am - F - G - E
-  const N_LEAD = [
-    81, _, 76, _, 81, _, 76, 77,
-    77, _, 72, _, 77, _, 72, 74,
-    79, _, 74, _, 79, _, 74, 76,
-    80, _, 76, _, 80, _, 83, _,
-  ];
+  // ── 속보 테마: 긴장감 (브레이킹 뉴스가 떠 있는 동안) ──
+  // 반음씩 갈아대는 16분음표 저음 + 마디마다 반음씩 올라가는 조 + 불안한 감7화음 + 심장 박동 + 스네어 롤
+  const NSTEP = 60 / 168 / 4; // 168BPM 16분음표
+  const N_ROOT = [40, 41, 42, 43]; // E → F → F# → G (계속 조여 오는 느낌)
   let noise = null;
-  function hat(t, vol = 0.05) {
+  function noiseHit(t, vol, dur, type, freq) {
     const s = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
-    s.buffer = noise; f.type = "highpass"; f.frequency.value = 6000;
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + 0.06);
+    s.buffer = noise; f.type = type; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + dur + 0.01);
   }
-  function drum(t) {
+  function heart(t, vol) { // 낮게 쿵 울리는 심장 박동
     const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-    g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.16);
+    o.frequency.setValueAtTime(70, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.18);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.23);
+  }
+  // 떨리는 긴 음 (비브라토)
+  function eerie(freq, t, dur, vol) {
+    const o = ctx.createOscillator(), g = ctx.createGain(), l = ctx.createOscillator(), lg = ctx.createGain();
+    o.type = "square"; o.frequency.value = freq;
+    l.frequency.value = 6; lg.gain.value = freq * 0.012; l.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.05);
+    g.gain.setTargetAtTime(0, t + dur, 0.05);
+    o.connect(g); g.connect(bus); o.start(t); l.start(t); o.stop(t + dur + 0.3); l.stop(t + dur + 0.3);
   }
   function playNews(i, t) {
-    const bar = Math.floor(i / 8) % 4, beat = i % 8, ch = N_CHORDS[bar];
-    // 쿵쿵 울리는 북 + 쉴 새 없는 하이햇
-    if (beat === 0 || beat === 4) drum(t);
-    hat(t, beat % 2 ? 0.03 : 0.05);
-    // 몰아치는 베이스 (8분음표, 옥타브 왕복)
-    tone(hz(ch[0] - 12 + (beat % 2 ? 12 : 0)), t, NSTEP * 0.8, "square", 0.05, 0.005, 0.04);
-    // 엇박자 화음 찌르기
-    if (beat === 0 || beat === 3 || beat === 6) ch.forEach((n) => tone(hz(n + 12), t, NSTEP * 0.9, "square", 0.018, 0.005, 0.05));
-    // 경보음 같은 멜로디
-    const m = N_LEAD[i % 32];
-    if (m !== _) tone(hz(m), t, NSTEP * (N_LEAD[(i + 1) % 32] === _ ? 1.8 : 0.9), "square", 0.04, 0.005, 0.06);
+    const bar = Math.floor(i / 16) % 4, s = i % 16, r = N_ROOT[bar];
+    // 갈아대는 저음: 근음-근음-반음 위-근음
+    tone(hz(r + [0, 0, 1, 0][s % 4]), t, NSTEP * 0.9, "square", 0.045, 0.003, 0.02);
+    if (s % 4 === 0) tone(hz(r - 12), t, NSTEP * 3.5, "triangle", 0.1, 0.005, 0.05);
+    // 심장 박동 (쿵-쿵, 쉬고)
+    if (s === 0) heart(t, 0.32);
+    if (s === 3) heart(t, 0.22);
+    // 불안한 감7화음을 엇박에 찌르기
+    if (s === 0 || s === 6 || s === 10) [0, 3, 6, 9].forEach((d) => tone(hz(r + 24 + d), t, NSTEP * 1.6, "square", 0.012, 0.003, 0.05));
+    // 위에서 떨리며 버티는 긴 음 → 마디 후반엔 증4도로 흔들림
+    if (s === 0) eerie(hz(r + 36), t, NSTEP * 7.5, 0.03);
+    if (s === 8 || s === 12) eerie(hz(r + 42), t, NSTEP * 3.5, 0.028);
+    if (s === 10 || s === 14) eerie(hz(r + 41), t, NSTEP * 1.8, 0.024);
+    // 마지막 마디: 스네어 롤이 점점 커짐
+    if (bar === 3 && s >= 8) noiseHit(t, 0.02 + (s - 8) * 0.008, 0.06, "bandpass", 1800);
+    else if (s === 4 || s === 12) noiseHit(t, 0.03, 0.08, "bandpass", 1800);
   }
 
   function playMain(i, t) {
@@ -93,7 +102,7 @@ window.BGM = (() => {
   let mode = "main"; // main: 잔잔한 곡, news: 속보 테마
   function schedule() {
     while (nextT < ctx.currentTime + 0.2) {
-      if (mode === "news") { playNews(step, nextT); step = (step + 1) % 32; nextT += NSTEP; }
+      if (mode === "news") { playNews(step, nextT); step = (step + 1) % 64; nextT += NSTEP; }
       else { playMain(step, nextT); step = (step + 1) % 64; nextT += STEP; }
     }
   }
