@@ -9,7 +9,7 @@
   - **브레이킹 뉴스**: `data/news.js`(뉴스 5시점×후보, 효과 mods/shock/mentor, 뉴스 세상 전용 이벤트 requires.world, 토론 질문), `anchor.html`+`js/anchor.js`(앵커 원고·송출, 비번 ANCHOR_PASSWORD), `js/breaking.js`(긴급 배너). 방 만들 때 config.news에 후보 번호 저장, 송출 상태는 news/live·news/done. 조가 뉴스 시점에 먼저 도착하면 G.waitNews로 대기.
   - 관리자 '📊 결과 비교' 탭: 자산 그래프(G.hist)·엔딩·배운 이유(외적/내적, logic.js motiveOf)·뉴스 직후 첫 선택(G.afterNews)·토론 질문.
   - 테스트: 주소 뒤 `?local`(서버 대신 브라우저 안), 학생 여러 명은 `?local&p=1`처럼.
-- 배경음악: `js/bgm.js`가 코드로 연주하는 잔잔한 8비트 곡(C-Am-F-G 8마디 반복, 80BPM, 멜로디 레가토·16분 분산화음·사인 패드·5도 베이스·메아리(delay) 버스). index·혼자하기에만. 첫 클릭 때 시작, 🔊 버튼으로 켜고 끔(localStorage bgm_on), 속보 경보음 때 잠깐 줄임(BGM.duck).
+- 배경음악: `js/bgm.js`가 코드로 연주하는 잔잔한 8비트 곡(C-Am-F-G 8마디 반복, 80BPM, 멜로디 레가토·16분 분산화음·사인 패드·5도 베이스·메아리(delay) 버스). index·혼자하기에만. 첫 클릭 때 시작, 🔊 버튼으로 켜고 끔(localStorage bgm_on), 속보 배너가 떠 있는 동안은 속보 테마(Am-F-G-E, 152BPM, 북·하이햇·경보 멜로디)로 바뀜(BGM.news, breaking.js show/hide에서 호출).
 - **혼자하기.html**: 1인용(js/engine.js, 80세까지). 뉴스(news.js, 나이 되면 자동 송출·8초 자동 닫힘)·교수님 찬스 버튼 1번·🎲확률·60초 타이머(settings soloChoiceSeconds, 0이면 끔)·마지막 분위·도움말(HELP_MODE="solo"→HELP.soloGuide) 포함. multi.css도 불러옴(body.solo로 통계 2칸). 모바일용.html은 이걸 합친 파일. 백업: `백업/v1_혼자하기`, git 태그 v1-solo.
 - `data/` 게임 내용. 사용자 스크립트는 여기만 고친다.
   - `settings.js` 능력치·기본값·BGM / `stages.js` 시기와 일상 문장 / `events.js` 이벤트 / `endings.js` 엔딩

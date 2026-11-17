@@ -33,7 +33,8 @@ window.Breaking = (() => {
       const tk = `${item.ticker}  ▶  ${item.headline}  ▶  `;
       $("bkTicker").textContent = tk + tk;
       el.classList.remove("open"); void el.offsetWidth; el.classList.add("open");
-      if (o.live) { beep(); if (window.BGM) BGM.duck(4); }
+      if (window.BGM) BGM.news(true); // 속보 테마로
+      if (o.live) { beep(); if (window.BGM) BGM.duck(1.5); }
     }
     el.classList.toggle("live", !!o.live);
     $("bkLive").style.display = o.live ? "" : "none";
@@ -45,6 +46,10 @@ window.Breaking = (() => {
     // 생방송이 끝난 뒤 보여 주는 우리 가족 변화 카드는 누르지 않아도 8초 뒤 저절로 닫힘
     if (!o.live && !autoT) autoT = setTimeout(() => { autoT = null; $("bkClose").click(); }, 8000);
   }
-  function hide() { const el = $("breaking"); if (el) el.classList.remove("open"); shownKey = null; }
+  function hide() {
+    const el = $("breaking");
+    if (el && el.classList.contains("open") && window.BGM) BGM.news(false); // 원래 음악으로
+    if (el) el.classList.remove("open"); shownKey = null;
+  }
   return { show, hide, beep };
 })();

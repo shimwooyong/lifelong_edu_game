@@ -1994,7 +1994,8 @@ window.Breaking = (() => {
       const tk = `${item.ticker}  ▶  ${item.headline}  ▶  `;
       $("bkTicker").textContent = tk + tk;
       el.classList.remove("open"); void el.offsetWidth; el.classList.add("open");
-      if (o.live) { beep(); if (window.BGM) BGM.duck(4); }
+      if (window.BGM) BGM.news(true); // 속보 테마로
+      if (o.live) { beep(); if (window.BGM) BGM.duck(1.5); }
     }
     el.classList.toggle("live", !!o.live);
     $("bkLive").style.display = o.live ? "" : "none";
@@ -2006,7 +2007,11 @@ window.Breaking = (() => {
     // 생방송이 끝난 뒤 보여 주는 우리 가족 변화 카드는 누르지 않아도 8초 뒤 저절로 닫힘
     if (!o.live && !autoT) autoT = setTimeout(() => { autoT = null; $("bkClose").click(); }, 8000);
   }
-  function hide() { const el = $("breaking"); if (el) el.classList.remove("open"); shownKey = null; }
+  function hide() {
+    const el = $("breaking");
+    if (el && el.classList.contains("open") && window.BGM) BGM.news(false); // 원래 음악으로
+    if (el) el.classList.remove("open"); shownKey = null;
+  }
   return { show, hide, beep };
 })();
 </script>
@@ -2050,7 +2055,43 @@ window.BGM = (() => {
   // 멜로디 음 길이: 다음 음이 나올 때까지(최대 4칸)
   const holdOf = (i) => { let n = 1; while (n < 4 && MELODY[(i + n) % MELODY.length] === _) n++; return n; };
 
-  function play(i, t) {
+  // ── 속보 테마: 단조, 빠른 박자, 경보음 같은 멜로디 (브레이킹 뉴스가 떠 있는 동안) ──
+  const NSTEP = 60 / 152 / 2; // 152BPM 8분음표
+  const N_CHORDS = [[57, 60, 64], [53, 57, 60], [55, 59, 62], [52, 56, 59]]; // Am - F - G - E
+  const N_LEAD = [
+    81, _, 76, _, 81, _, 76, 77,
+    77, _, 72, _, 77, _, 72, 74,
+    79, _, 74, _, 79, _, 74, 76,
+    80, _, 76, _, 80, _, 83, _,
+  ];
+  let noise = null;
+  function hat(t, vol = 0.05) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+    s.buffer = noise; f.type = "highpass"; f.frequency.value = 6000;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + 0.06);
+  }
+  function drum(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+    g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.16);
+  }
+  function playNews(i, t) {
+    const bar = Math.floor(i / 8) % 4, beat = i % 8, ch = N_CHORDS[bar];
+    // 쿵쿵 울리는 북 + 쉴 새 없는 하이햇
+    if (beat === 0 || beat === 4) drum(t);
+    hat(t, beat % 2 ? 0.03 : 0.05);
+    // 몰아치는 베이스 (8분음표, 옥타브 왕복)
+    tone(hz(ch[0] - 12 + (beat % 2 ? 12 : 0)), t, NSTEP * 0.8, "square", 0.05, 0.005, 0.04);
+    // 엇박자 화음 찌르기
+    if (beat === 0 || beat === 3 || beat === 6) ch.forEach((n) => tone(hz(n + 12), t, NSTEP * 0.9, "square", 0.018, 0.005, 0.05));
+    // 경보음 같은 멜로디
+    const m = N_LEAD[i % 32];
+    if (m !== _) tone(hz(m), t, NSTEP * (N_LEAD[(i + 1) % 32] === _ ? 1.8 : 0.9), "square", 0.04, 0.005, 0.06);
+  }
+
+  function playMain(i, t) {
     const bar = Math.floor(i / 8) % 8, beat = i % 8;
     const m = MELODY[i % MELODY.length];
     const ch = CHORDS[bar];
@@ -2067,8 +2108,23 @@ window.BGM = (() => {
     if (beat === 4) tone(hz(BASS[bar] + 7), t, STEP * 4, "triangle", 0.09, 0.02, 0.2);
   }
 
+  let mode = "main"; // main: 잔잔한 곡, news: 속보 테마
   function schedule() {
-    while (nextT < ctx.currentTime + 0.2) { play(step, nextT); step = (step + 1) % 64; nextT += STEP; }
+    while (nextT < ctx.currentTime + 0.2) {
+      if (mode === "news") { playNews(step, nextT); step = (step + 1) % 32; nextT += NSTEP; }
+      else { playMain(step, nextT); step = (step + 1) % 64; nextT += STEP; }
+    }
+  }
+  // 곡 바꾸기: 잠깐 소리를 줄였다가 새 곡을 처음부터
+  function setMode(m) {
+    if (mode === m) return;
+    mode = m; step = 0;
+    if (!ctx || !master) return;
+    const t = ctx.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(0.0001, t);
+    master.gain.linearRampToValueAtTime(VOL, t + 0.4);
+    nextT = t + 0.08;
   }
 
   function start() {
@@ -2079,6 +2135,8 @@ window.BGM = (() => {
         master = ctx.createGain(); master.gain.value = VOL; master.connect(ctx.destination);
         // 은은한 메아리: 음 사이를 채워 소리가 덜 비어 보이게
         bus = ctx.createGain(); bus.connect(master);
+        noise = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+        const nd = noise.getChannelData(0); for (let k = 0; k < nd.length; k++) nd[k] = Math.random() * 2 - 1;
         const dl = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain(), lp = ctx.createBiquadFilter();
         dl.delayTime.value = STEP * 1.5; fb.gain.value = 0.32; wet.gain.value = 0.3; lp.type = "lowpass"; lp.frequency.value = 2200;
         bus.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(master);
@@ -2120,7 +2178,7 @@ window.BGM = (() => {
   document.addEventListener("pointerdown", kick, true);
   document.addEventListener("keydown", kick, true);
 
-  return { start, stop, toggle, duck, state: () => (ctx ? ctx.state + " " + step : "off") };
+  return { start, stop, toggle, duck, news: (onAir) => setMode(onAir ? "news" : "main"), state: () => (ctx ? ctx.state + " " + mode + " " + step : "off") };
 })();
 </script>
   <!-- 게임 엔진 -->
