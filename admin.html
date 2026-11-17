@@ -61,5 +61,17 @@
   <script src="data/endings.js?v=1794906147"></script>
   <script src="js/logic.js?v=1794906147"></script>
   <script src="js/admin.js?v=1794906147"></script>
+  <script>
+  // 새 버전이 올라왔는데 브라우저가 예전 페이지를 기억하고 있으면, 새 페이지로 바로 바꿔 줌
+  (function () {
+    var m = document.documentElement.innerHTML.match(/\?v=(\d+)/); if (!m) return;
+    fetch(location.pathname + "?nc=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
+      var n = (t.match(/\?v=(\d+)/) || [])[1];
+      if (!n || n === m[1]) return;
+      var u = new URL(location.href); if (u.searchParams.get("r") === n) return;
+      u.searchParams.set("r", n); location.replace(u.toString());
+    }).catch(function () {});
+  })();
+  </script>
 </body>
 </html>
