@@ -38,6 +38,7 @@ const SETTINGS = {
 교수님의 설명을 들은 뒤 '다음'을 누르세요.`,
   },
 
+  soloChoiceSeconds: 60,            // 혼자하기 선택 제한시간(초). 0이면 타이머 없음
   bgm: "",                          // 예: "assets/sounds/bgm.mp3"
   randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
 };

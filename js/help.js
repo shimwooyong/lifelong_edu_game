@@ -49,7 +49,8 @@ window.Glossary = (() => {
       body.innerHTML = `<dl class="term-list">${Object.keys(HELP.terms).sort((a, b) => a.localeCompare(b, "ko"))
         .map((t) => `<dt>${esc(t)}</dt><dd>${esc(HELP.terms[t])}</dd>`).join("")}</dl>`;
     } else {
-      body.innerHTML = HELP[tab].map(([h, t]) => `<h3>${esc(h)}</h3><p>${esc(t)}</p>`).join("");
+      const key = tab === "guide" && window.HELP_MODE === "solo" && HELP.soloGuide ? "soloGuide" : tab;
+      body.innerHTML = HELP[key].map(([h, t]) => `<h3>${esc(h)}</h3><p>${esc(t)}</p>`).join("");
     }
     body.scrollTop = 0;
     el.classList.add("open");

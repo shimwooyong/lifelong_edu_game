@@ -48,6 +48,50 @@
     if (req.eduCount && S.edu.length < req.eduCount) return false;
     if (req.goodEdu && goodEduCount() < req.goodEdu) return false;
     if (req.maxGoodEdu != null && goodEduCount() > req.maxGoodEdu) return false;
+    for (const f of req.world || []) if (!S.world[f]) return false;
+    for (const f of req.notWorld || []) if (S.world[f]) return false;
+    return true;
+  }
+
+  // ── 브레이킹 뉴스 (혼자하기: 그 나이가 되면 자동 송출) ──
+  const hasNews = () => typeof NEWS !== "undefined";
+  const newsPick = (k) => NEWS.slots[k][NEWS.fixed ? NEWS.fixed[k] : Math.floor(Math.random() * NEWS.slots[k].length)];
+  const worldItem = (id) => { if (!hasNews()) return null; for (const s of NEWS.slots) for (const n of s) if (n.id === id) return n; return null; };
+  // 뉴스 데이터는 조별 게임 모양(G, ch)을 기대하므로 맞춰 준다
+  function ctx() {
+    const ch = { name: S.name, age: S.age, flags: S.flags, edu: S.edu };
+    return { ch, G: { asset: S.stats.자산, world: S.world, cls: S.cls && S.cls.name, chars: { child: ch, parent: ch } } };
+  }
+  function worldMods(ev, c, base) {
+    let add = 0; const notes = []; const { G, ch } = ctx();
+    for (const id in S.world) for (const m of (worldItem(id) || {}).mods || []) {
+      if (!m.test(ev, c, ch, G)) continue;
+      const a = typeof m.asset === "function" ? m.asset(base) : m.asset;
+      if (a) { add += a; notes.push(m.note); }
+    }
+    return { add, notes };
+  }
+  // 이 나이에 뉴스가 있으면 발표하고 true
+  function airNews(age) {
+    if (!hasNews()) return false;
+    const k = NEWS.ages.indexOf(age);
+    if (k < 0 || S.newsSeen[k]) return false;
+    const item = newsPick(k);
+    S.newsSeen[k] = item.id; S.world[item.id] = true;
+    log(`📰 ${NEWS.birthYear + age}년 속보: ${item.headline}`, "news", age);
+    let shockTxt = "";
+    const sh = item.shock ? item.shock(ctx().G) : null;
+    if (sh && sh.asset) {
+      const before = S.stats.자산;
+      S.stats.자산 = clamp(before + sh.asset);
+      shockTxt = `${S.name}에게 온 변화 → 자산 ${sh.asset > 0 ? "+" : ""}${S.stats.자산 - before} (${sh.note})`;
+      log(`📰 뉴스 영향: 자산 ${sh.asset > 0 ? "+" : ""}${S.stats.자산 - before} (${sh.note})`, "news", age);
+      renderStats("stats", { 자산: S.stats.자산 - before });
+    }
+    if (window.Breaking) {
+      S.busy = true;
+      Breaking.show(item, k, { live: false, shock: shockTxt, onClose: () => { S.busy = false; } });
+    }
     return true;
   }
 
@@ -117,9 +161,10 @@
       age: 0, cls,
       stats: { 자산: Math.round(cls.asset * spread) },
       flags: {}, done: {}, edu: [],
-      mentorRolled: {}, mentorCount: 0,
+      chanceUsed: false, world: {}, newsSeen: {},
       stage: null, busy: false,
     });
+    S.startAsset = S.stats.자산;
     $("log").innerHTML = "";
     show("gameScreen");
     renderTop();
@@ -146,6 +191,7 @@
   function nextYear() {
     if (S.busy) return true;
     if (S.age >= SETTINGS.maxAge) { ending(); return true; }
+    if (airNews(S.age + 1)) return true; // 뉴스가 먼저, 닫은 뒤 다음 이벤트
     S.age++;
     const st = stageOf(S.age);
     if (st.id !== S.stage) { S.stage = st.id; log(`── ${st.id} ──`, "stage"); }
@@ -183,28 +229,16 @@
     $("evResult").style.display = "none";
     const list = ev.choices.filter((c) => meets(c.requires));
 
-    // 교육 멘토링: 이 시기의 가장 좋은 선택이 있는 이벤트에서 시기당 한 번 확률 검사
-    const best = list.find((c) => c.mentor);
+    if (window.Glossary) $("evText").innerHTML = Glossary.mark(fill(ev.text));
+
+    // 교수님 찬스: 한 번만, 최고 선택이 정해진 이벤트에서만(뉴스가 최고 선택을 바꿨으면 그걸로), 인생 양끝 구간 제외
+    let swap = null;
+    for (const id in S.world) { const n = worldItem(id); if (n && n.mentor && n.mentor[ev.id]) swap = n.mentor[ev.id]; }
+    const best = (swap && list.find((c) => c.text.includes(swap.pick))) || list.find((c) => c.mentor);
     const M = SETTINGS.mentoring;
-    const edge = SETTINGS.maxAge * (M?.edge ?? 0); // 인생 양끝 구간에선 멘토링 없음
-    if (best && M && S.age >= edge && S.age <= SETTINGS.maxAge - edge && !S.mentorRolled[st.id]) {
-      S.mentorRolled[st.id] = true;
-      const p = M.chance * luck() * Math.pow(M.repeat ?? 1, S.mentorCount);
-      if (S.mentorCount < M.max && Math.random() < p) {
-        S.mentorCount++;
-        $("eventModal").querySelector(".card").classList.add("mentor");
-        if (window.Pixel) $("evImage").src = Pixel.scene("mentor");
-        $("evTitle").textContent = M.title;
-        $("evText").textContent = `${fill(M.text)}\n\n[이번 상황] ${fill(ev.title)}\n${fill(ev.text)}`;
-        const b = document.createElement("button");
-        b.className = "btn primary";
-        b.textContent = "다음 ▶";
-        b.onclick = () => choose(best, true);
-        box.appendChild(b);
-        $("eventModal").classList.add("open");
-        return;
-      }
-    }
+    const edge = SETTINGS.maxAge * (M?.edge ?? 0);
+    const chanceOk = !!best && S.age >= edge && S.age <= SETTINGS.maxAge - edge;
+    S.chance = chanceOk ? { c: best, swap: swap && best.text.includes(swap.pick) ? swap : null } : null;
 
     // 선택지 순서는 매번 섞는다
     for (let i = list.length - 1; i > 0; i--) {
@@ -214,6 +248,7 @@
     const costOf = (c) => -((c.effects || {}).자산 || 0);
     // 모든 선택지가 돈이 모자라면(피할 수 없는 손실) 잠그지 않는다
     const canLock = list.some((c) => costOf(c) <= S.stats.자산);
+    const open = [];
     list.forEach((c) => {
       const b = document.createElement("button");
       b.className = "btn";
@@ -223,20 +258,57 @@
         // 돈이 모자라면 고를 수 없다
         b.disabled = true;
         b.textContent += ` (자산 ${cost} 필요)`;
-      } else b.onclick = () => choose(c);
+      } else { b.onclick = () => choose(c); open.push(c); }
+      // 투자처럼 결과가 운에 따라 갈리는 선택지는 확률을 보여 준다(자산 반영)
+      if (c.outcomes) {
+        const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o))), sum = ws.reduce((a, x) => a + x, 0) || 1;
+        b.insertAdjacentHTML("beforeend", `<small class="odds">🎲 ${c.outcomes.map((o, k) => `${toneOf(o) === false ? "실패" : "성공"} ${Math.round((ws[k] / sum) * 100)}%`).join(" / ")}</small>`);
+      }
       box.appendChild(b);
     });
+    // 교수님 찬스 버튼
+    const cb = document.createElement("button");
+    cb.className = "btn chance";
+    cb.innerHTML = `🎓 교수님 찬스 <small>${S.chanceUsed ? "(이미 사용함)" : S.chance ? "(일생에 1번)" : "(이 상황에선 쓸 수 없어요)"}</small>`;
+    if (S.chanceUsed || !S.chance) cb.disabled = true;
+    else cb.onclick = () => { S.chanceUsed = true; choose(S.chance.c, true); };
+    box.appendChild(cb);
+    // 선택 제한시간: 끝나면 고를 수 있는 선택지 중 무작위
+    startTimer(() => choose(pick(open.length ? open : list), false, true));
     $("eventModal").classList.add("open");
   }
 
-  function choose(c, mentored = false) {
+  // ── 선택 제한시간 ──
+  let timer = null;
+  function startTimer(onEnd) {
+    stopTimer();
+    const sec = SETTINGS.soloChoiceSeconds;
+    let tm = $("evTimer");
+    if (!tm) { tm = document.createElement("div"); tm.id = "evTimer"; tm.className = "ev-timer"; tm.innerHTML = "<i></i><span></span>"; $("evChoices").before(tm); }
+    tm.style.display = sec ? "" : "none";
+    if (!sec) return;
+    const t0 = Date.now(), lim = sec * 1000;
+    const tick = () => {
+      const left = Math.max(0, lim - (Date.now() - t0));
+      tm.querySelector("i").style.width = (left / lim) * 100 + "%";
+      tm.querySelector("span").textContent = `⏰ ${Math.ceil(left / 1000)}초`;
+      tm.classList.toggle("hurry", left < 10000);
+      if (left <= 0) { stopTimer(); onEnd(); }
+    };
+    tick();
+    timer = setInterval(tick, 500);
+  }
+  function stopTimer() { clearInterval(timer); timer = null; const tm = $("evTimer"); if (tm) tm.style.display = "none"; }
+
+  function choose(c, mentored = false, timedOut = false) {
+    stopTimer();
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
     if (mentored) {
-      // 멘토링: 가장 좋은 선택을 한 것으로 하고 멘토링 결과를 적용
-      out = { ...c, effects: c.mentor.effects || c.effects, result: c.mentor.result || c.result };
-      $("evTitle").textContent = fill(S.current.title);
-      $("evText").textContent = `🎓 교수님의 조언에 따른 선택: "${fill(c.text)}"`;
+      // 교수님 찬스: 가장 좋은 선택을 한 것으로 하고 찬스 결과를 적용 (뉴스가 바꾼 최고 선택이면 그 결과)
+      const m = (S.chance && S.chance.swap) || c.mentor || {};
+      out = { ...c, effects: m.effects || c.effects, result: m.result || c.result };
+      $("evText").textContent = `🎓 교수님 찬스로 고른 선택: "${fill(c.text)}"`;
     } else if (c.outcomes) {
       // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
       const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
@@ -244,7 +316,11 @@
       out = c.outcomes[c.outcomes.length - 1];
       for (let i = 0; i < ws.length; i++) { r -= ws[i]; if (r < 0) { out = c.outcomes[i]; break; } }
     }
-    const effects = out.effects || {};
+    if (timedOut) $("evText").textContent = `⏰ 시간 초과로 자동 결정: "${fill(c.text)}"`;
+    const effects = { ...(out.effects || {}) };
+    // 뉴스가 바꾼 세상의 추가 효과
+    const wm = worldMods(S.current, c, effects.자산 || 0);
+    if (wm.add) effects.자산 = (effects.자산 || 0) + wm.add;
     const applied = {};
     for (const k in effects) {
       const before = S.stats[k];
@@ -256,18 +332,20 @@
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
     if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
-    log(`${mentored ? "🎓 교육 멘토링 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    log(`${mentored ? "🎓 교수님 찬스 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
     playSound(out.sound || c.sound);
 
     // 결과 표시
+    const mk = (t) => (window.Glossary ? Glossary.mark(fill(t)) : fill(t));
     $("evChoices").style.display = "none";
-    $("evResultText").textContent = fill(out.result || "");
+    $("evResultText").innerHTML = mk(out.result || "");
     $("evDeltas").innerHTML = Object.entries(applied).filter(([, d]) => d)
-      .map(([k, d]) => `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("");
+      .map(([k, d]) => `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">${k === "교육" ? "📚 교육 기회 +1" : `${k} ${d > 0 ? "+" : ""}${d}`}</span>`).join("")
+      + (wm.add ? `<span class="news-delta">📰 뉴스 영향 ${wm.add > 0 ? "+" : ""}${wm.add} · ${wm.notes.join(", ")}</span>` : "");
     const info = S.current.info;
     $("evInfo").style.display = info ? "block" : "none";
-    $("evInfoText").textContent = fill(info || "");
+    $("evInfoText").innerHTML = mk(info || "");
     $("evResult").style.display = "block";
     $("evContinue").onclick = () => closeEvent(out.next || c.next);
   }
@@ -287,6 +365,10 @@
     $("endTitle").textContent = fill(end.title);
     $("endText").textContent = fill(end.text);
     renderStats("endStats");
+    // 출발 분위 → 마지막 분위 (출발 때 쓴 10분위 자산표에서 가장 가까운 분위)
+    const list = SETTINGS.startClasses, a = S.stats.자산;
+    const last = list.reduce((b, c) => (Math.abs(c.asset - a) < Math.abs(b.asset - a) ? c : b), list[0]);
+    $("endStats").insertAdjacentHTML("beforeend", `<div class="decile-line">🏠 출발 <b>${S.cls.name}</b> → 마지막 <b>${last.name}</b></div>`);
     $("eduList").innerHTML = S.edu.length
       ? S.edu.map((e) => `<li><small>${e.age}세</small>${e.name}</li>`).join("")
       : "<li>받은 교육이 없습니다.</li>";
