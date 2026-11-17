@@ -2033,17 +2033,19 @@ window.BGM = (() => {
     74, _, 71, _, 67, _, _, _,
   ];
 
-  let ctx = null, master = null, timer = null, step = 0, nextT = 0, on = true, started = false;
+  let ctx = null, master = null, bus = null, timer = null, step = 0, nextT = 0, on = true, started = false;
   try { on = localStorage.getItem("bgm_on") !== "0"; } catch (e) {}
 
-  function tone(freq, t, dur, type, vol) {
+  // 음 하나: 부드럽게 시작(atk) → 길게 유지(살짝 줄어듦) → 끝에서 천천히 사라짐(rel). 음이 뚝 끊기지 않게
+  function tone(freq, t, dur, type, vol, atk = 0.015, rel = 0.12) {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type; o.frequency.value = freq;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(vol, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(master);
-    o.start(t); o.stop(t + dur + 0.02);
+    g.gain.linearRampToValueAtTime(vol, t + atk);
+    g.gain.setTargetAtTime(vol * 0.65, t + atk, dur * 0.5);
+    g.gain.setTargetAtTime(0, t + dur, rel / 3);
+    o.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + dur + rel + 0.05);
   }
   // 멜로디 음 길이: 다음 음이 나올 때까지(최대 4칸)
   const holdOf = (i) => { let n = 1; while (n < 4 && MELODY[(i + n) % MELODY.length] === _) n++; return n; };
@@ -2051,10 +2053,18 @@ window.BGM = (() => {
   function play(i, t) {
     const bar = Math.floor(i / 8) % 8, beat = i % 8;
     const m = MELODY[i % MELODY.length];
-    if (m !== _) tone(hz(m), t, STEP * holdOf(i % MELODY.length) * 0.95, "square", 0.045);
     const ch = CHORDS[bar];
-    tone(hz(ch[[0, 1, 2, 1][beat % 4]] + 12), t, STEP * 0.6, "triangle", 0.035); // 잔잔한 분산화음
-    if (beat === 0 || beat === 4) tone(hz(BASS[bar]), t, STEP * 3.6, "triangle", 0.11); // 베이스
+    // 멜로디: 다음 음까지 이어서
+    if (m !== _) tone(hz(m), t, STEP * holdOf(i % MELODY.length), "square", 0.04, 0.02, 0.2);
+    // 분산화음: 16분음표로 촘촘하게, 앞 음과 살짝 겹치게
+    const arp = [0, 1, 2, 1, 2, 1, 0, 1];
+    tone(hz(ch[arp[(beat * 2) % 8]] + 12), t, STEP * 0.7, "triangle", 0.028, 0.01, 0.15);
+    tone(hz(ch[arp[(beat * 2 + 1) % 8]] + 12), t + STEP / 2, STEP * 0.7, "triangle", 0.022, 0.01, 0.15);
+    // 패드: 마디 내내 깔리는 부드러운 화음
+    if (beat === 0) ch.forEach((n) => tone(hz(n), t, STEP * 8, "sine", 0.03, 0.4, 0.6));
+    // 베이스: 근음 + 5도로 걸음걸이처럼
+    if (beat === 0) tone(hz(BASS[bar]), t, STEP * 4, "triangle", 0.11, 0.02, 0.2);
+    if (beat === 4) tone(hz(BASS[bar] + 7), t, STEP * 4, "triangle", 0.09, 0.02, 0.2);
   }
 
   function schedule() {
@@ -2065,7 +2075,14 @@ window.BGM = (() => {
     if (!on) return;
     try {
       ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-      if (!master) { master = ctx.createGain(); master.gain.value = VOL; master.connect(ctx.destination); }
+      if (!master) {
+        master = ctx.createGain(); master.gain.value = VOL; master.connect(ctx.destination);
+        // 은은한 메아리: 음 사이를 채워 소리가 덜 비어 보이게
+        bus = ctx.createGain(); bus.connect(master);
+        const dl = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain(), lp = ctx.createBiquadFilter();
+        dl.delayTime.value = STEP * 1.5; fb.gain.value = 0.32; wet.gain.value = 0.3; lp.type = "lowpass"; lp.frequency.value = 2200;
+        bus.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(master);
+      }
       ctx.resume();
       if (!timer) { nextT = ctx.currentTime + 0.1; timer = setInterval(schedule, 50); }
       started = true;
