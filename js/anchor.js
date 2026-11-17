@@ -21,6 +21,7 @@
   function render() {
     const cfg = root && root.config;
     if (!cfg || !cfg.news) {
+      renderFeed();
       $("slotList").innerHTML = "";
       $("script").innerHTML = `<p class="muted">아직 뉴스가 있는 게임 방이 없어요. 선생님이 방을 만들면 원고가 나타납니다.</p>`;
       $("onAir").className = "on-air"; $("onAir").textContent = "OFF AIR";
@@ -66,5 +67,34 @@
       <div class="ctrl">${ctrl}</div>`;
     if ($("airBtn")) $("airBtn").onclick = () => Net.set("news/live", k);
     if ($("endBtn")) $("endBtn").onclick = () => Net.set(`news/done/${k}`, true).then(() => Net.set("news/live", null));
+    renderFeed();
+  }
+
+  // 사회자 읽기: 조마다 지금 진행 중인 이벤트와 결과, 알아보기
+  function renderFeed() {
+    if (!$("feed") || typeof Logic === "undefined") return;
+    const gs = (root && root.groups) || {};
+    const keys = Object.keys(gs).filter((g) => gs[g].game).sort((a, b) => a.slice(1) - b.slice(1));
+    if (!keys.length) { $("feed").innerHTML = `<p class="muted">아직 시작한 조가 없어요.</p>`; return; }
+    $("feed").innerHTML = keys.map((g) => {
+      const G = Logic.normalize(gs[g].game), c = G.chars.child;
+      const head = `<div class="feed-head"><b>${g.slice(1)}조</b> ${esc(c.name)}네 · 자녀 ${c.age}세 · 자산 ${G.asset}</div>`;
+      if (G.ended) return `<div class="feed-card">${head}<p>🏁 엔딩: <b>${esc(G.ending && G.ending.title)}</b> (마지막 ${esc(Logic.decileOf(G.asset))})</p></div>`;
+      const ts = Object.keys(G.pending);
+      if (!ts.length) {
+        const last = G.log.filter((l) => l.k === "event" || l.k === "news").slice(-1)[0];
+        return `<div class="feed-card dim">${head}<p class="muted">다음 이벤트로 넘어가는 중… ${last ? "· 최근: " + esc(last.t) : ""}</p></div>`;
+      }
+      return ts.map((t) => {
+        const p = G.pending[t], ev = Logic.evById(p.ev), ch = G.chars[t];
+        const title = `${Logic.TRACK[t]} ${ch.age}세 「${esc(Logic.fill(ev.title, ch.name))}」`;
+        if (!p.res) return `<div class="feed-card">${head}<p>${title} — 고민 중…</p></div>`;
+        const { c: ch2, out } = Logic.resultOf(p);
+        return `<div class="feed-card read">${head}<p>${title}</p>
+          <p class="feed-pick">▶ 선택: ${esc(Logic.fill(ch2.text, ch.name))}${p.res.m ? " (🎓 교수님 찬스)" : ""}${p.timedOut ? " (⏰ 시간 초과)" : ""}</p>
+          <p class="feed-result">${esc(Logic.fill(out.result || "", ch.name))}</p>
+          ${ev.info ? `<div class="feed-info"><b>📚 평생교육 알아보기</b><p>${esc(Logic.fill(ev.info, ch.name))}</p></div>` : ""}</div>`;
+      }).join("");
+    }).join("");
   }
 })();

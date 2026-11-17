@@ -164,20 +164,17 @@ const Logic = (() => {
     const ch = G.chars[track];
     ch.done[ev.id] = true;
     const idx = ev.choices.map((_, i) => i).filter((i) => meets(G, ch, ev.choices[i].requires));
-    const p = { ev: ev.id, order: [], locked: [], mentor: -1, votes: {}, ack: {} };
+    // mentor: 교수님 찬스로 골라질 '최고 선택' 번호(-1이면 이 이벤트에선 찬스 못 씀), t0: 선택 시작 시각(타이머)
+    const p = { ev: ev.id, order: [], locked: [], mentor: -1, votes: {}, ack: {}, t0: Date.now() };
 
-    // 교육 멘토링: 인생 양끝 구간 제외, 시기당 한 번 확률 검사
+    // 교수님 찬스: 최고 선택이 정해진(뻔하지 않은) 이벤트에서만, 인생 양끝 구간 제외
     const sw = mentorSwap(G, ev.id);
     const swIdx = sw ? idx.find((i) => ev.choices[i].text.includes(sw.pick)) : undefined;
     const best = swIdx !== undefined ? swIdx : idx.find((i) => ev.choices[i].mentor);
     if (swIdx !== undefined) p.msw = sw.id;
-    const MM = SETTINGS.mentoring, st = stageOf(ch.age);
+    const MM = SETTINGS.mentoring;
     const edge = SETTINGS.maxAge * ((MM && MM.edge) || 0);
-    if (best !== undefined && MM && ch.age >= edge && ch.age <= SETTINGS.maxAge - edge && !ch.mentorRolled[st.id]) {
-      ch.mentorRolled[st.id] = true;
-      const pr = MM.chance * luck(G) * Math.pow(MM.repeat ?? 1, ch.mentorCount);
-      if (ch.mentorCount < MM.max && Math.random() < pr) { ch.mentorCount++; p.mentor = best; }
-    }
+    if (best !== undefined && MM && ch.age >= edge && ch.age <= SETTINGS.maxAge - edge) p.mentor = best;
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     p.order = idx;
     const cost = (i) => -((ev.choices[i].effects || {}).자산 || 0);
@@ -204,11 +201,13 @@ const Logic = (() => {
       if (G.year > M().childEnd) { finish(G); return G; }
       const st = stageOf(c.age);
       if (st.id !== G.stage) { G.stage = st.id; addLog(G, `── 자녀 ${st.id} ──`, "stage"); }
-      if (G.year === M().independentAge) addLog(G, `── ${c.name} 독립: 이제 자녀가 스스로 선택하고, 부모님은 노년을 보냅니다 ──`, "stage");
+      if (G.year === M().independentAge) addLog(G, `── ${c.name} 독립: 이제 자녀가 스스로 선택합니다 ──`, "stage");
+      if (G.year === M().parentStart) addLog(G, `── 부모님 ${pa.age}세: 이제 부모님의 이벤트도 함께 나옵니다 ──`, "stage");
       const ec = findEvent(G, "child");
-      const ep = G.year >= M().independentAge ? findEvent(G, "parent") : null;
-      if (ec) openEvent(G, "child", ec);
-      if (ep) openEvent(G, "parent", ep);
+      const ep = G.year >= M().parentStart ? findEvent(G, "parent") : null;
+      // 같은 해에 둘 다 나오면 부모 이벤트 먼저, 끝나면 자녀 이벤트
+      if (ep) { openEvent(G, "parent", ep); if (ec) G.queued = ec.id; }
+      else if (ec) openEvent(G, "child", ec);
       if (ec || ep) return G;
     }
   }
@@ -227,9 +226,8 @@ const Logic = (() => {
     return { ...c, effects: m.effects || c.effects, result: m.result || c.result };
   }
 
-  function resolve(G, track, i) {
+  function resolve(G, track, i, mentored = false) {
     const p = G.pending[track], ev = evById(p.ev), c = ev.choices[i], ch = G.chars[track];
-    const mentored = p.mentor >= 0;
     let out = c, oi = -1;
     if (mentored) out = mentorOut(p, c);
     else if (c.outcomes) {
@@ -254,17 +252,56 @@ const Logic = (() => {
       G.afterNews[G.newsJust] = { w: track, ev: fill(ev.title, ch.name), c: fill(c.text, ch.name) };
       G.newsJust = null;
     }
-    addLog(G, `${mentored ? "🎓 교육 멘토링 · " : ""}${fill(ev.title, ch.name)} → ${fill(c.text, ch.name)}`, "event", track);
+    addLog(G, `${mentored ? "🎓 교수님 찬스 · " : ""}${fill(ev.title, ch.name)} → ${fill(c.text, ch.name)}`, "event", track);
   }
 
-  // 선택(투표): 결정하는 두 사람이 같은 선택지를 고르면 확정
+  const CHANCE = -2; // 투표값: 교수님 찬스
+  const canChance = (G, p) => p && p.mentor >= 0 && !G.chanceUsed;
+  // 투표값 v로 확정 (찬스면 최고 선택 + 찬스 사용 처리)
+  function settle(G, track, v) {
+    const p = G.pending[track];
+    if (v === CHANCE) { G.chanceUsed = true; resolve(G, track, p.mentor, true); }
+    else resolve(G, track, v);
+  }
+
+  // 선택(투표): 결정하는 두 사람이 같은 선택지(또는 둘 다 교수님 찬스)를 고르면 확정
   function vote(G, track, role, i) {
     const p = G.pending[track];
     if (!p || p.res || !deciders(G, track).includes(role)) return G;
+    if (i === CHANCE && !canChance(G, p)) return G;
     p.votes[role] = i;
     const v = deciders(G, track).map((r) => p.votes[r]);
-    if (v.every((x) => x !== undefined && x === v[0])) resolve(G, track, v[0]);
+    if (v.every((x) => x !== undefined && x === v[0])) settle(G, track, v[0]);
     return G;
+  }
+
+  // 제한시간이 지나면: 한 명만 골랐으면 그것, 둘이 다르면 둘 중 무작위, 아무도 안 골랐으면 전체 중 무작위
+  const limitMs = () => (M().choiceSeconds || 60) * 1000;
+  function timeout(G, track) {
+    const p = G.pending[track];
+    if (!p || p.res || !p.t0 || Date.now() - p.t0 < limitMs()) return G;
+    const vs = deciders(G, track).map((r) => p.votes[r]).filter((x) => x !== undefined && (x !== CHANCE || canChance(G, p)));
+    const pool = vs.length ? vs : p.order.filter((i) => !p.locked.includes(i));
+    const pickV = pool.length ? pool[Math.floor(Math.random() * pool.length)] : p.order[0];
+    p.timedOut = 1;
+    settle(G, track, pickV);
+    return G;
+  }
+
+  // 확률 결과가 있는 선택지의 실제 확률(%) — 자산에 따라 달라짐
+  function probs(G, c) {
+    if (!c.outcomes) return null;
+    const ws = c.outcomes.map((o) => weighted(G, o.chance, toneOf(o)));
+    const sum = ws.reduce((a, b) => a + b, 0) || 1;
+    return c.outcomes.map((o, k) => ({ p: Math.round((ws[k] / sum) * 100), good: toneOf(o) !== false }));
+  }
+
+  // 자산 → 소득분위 (출발 때 쓴 10분위 자산표 기준, 가장 가까운 분위)
+  function decileOf(asset) {
+    const list = SETTINGS.startClasses;
+    let best = list[0];
+    for (const c of list) if (Math.abs(c.asset - asset) < Math.abs(best.asset - asset)) best = c;
+    return best.name;
   }
 
   // 결과 확인: 두 사람 모두 '계속'을 누르면 닫힘
@@ -277,6 +314,11 @@ const Logic = (() => {
       const next = evById(out.next || c.next);
       delete G.pending[track];
       if (next) openEvent(G, track, next);
+      // 부모 이벤트가 끝나면 기다리던 자녀 이벤트를 연다
+      if (!Object.keys(G.pending).length && G.queued) {
+        const q = evById(G.queued); G.queued = null;
+        if (q) openEvent(G, "child", q);
+      }
     }
     return G;
   }
@@ -293,5 +335,5 @@ const Logic = (() => {
   }
 
   return { ROLES, TRACK, normalize, newGame, advance, vote, ack, deciders, resultOf, evById, stageOf, fill, goodEdu,
-    yearOf, birthYear, newsItem, motiveCounts };
+    yearOf, birthYear, newsItem, motiveCounts, timeout, probs, decileOf, canChance, CHANCE, limitMs };
 })();

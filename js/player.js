@@ -82,6 +82,7 @@
 
   // ── 대기 ──
   function renderWait(g, grp) {
+    if (window.Glossary) Glossary.autoOnce();
     show("wait");
     $("waitTitle").textContent = `${groupName(g)} 대기실`;
     const mem = membersOf(grp);
@@ -167,33 +168,47 @@
     $("evAge").textContent = `${Logic.TRACK[track]} ${ch.age}세 · ${Logic.yearOf(G)}년`;
     $("evTitle").textContent = Logic.fill(ev.title, ch.name);
     $("evText").textContent = Logic.fill(ev.text, ch.name);
+    $("evText").innerHTML = Glossary.mark(Logic.fill(ev.text, ch.name));
     const card = $("eventModal").querySelector(".card");
-    card.classList.toggle("mentor", p.mentor >= 0 && !p.res);
+    card.classList.remove("mentor");
     const img = $("evImage");
-    const pic = window.Pixel ? Pixel.forEvent(ev, st.id, p.mentor >= 0 && !p.res) : ev.image;
+    const pic = window.Pixel ? Pixel.forEvent(ev, st.id, false) : ev.image;
     if (pic) { img.src = pic; img.style.display = "block"; } else img.style.display = "none";
+
+    // 제한시간 막대 (없으면 만든다)
+    let tm = $("evTimer");
+    if (!tm) { tm = document.createElement("div"); tm.id = "evTimer"; tm.className = "ev-timer"; tm.innerHTML = "<i></i><span></span>"; $("evChoices").before(tm); }
+    timerCtx = !p.res && p.t0 ? { t0: p.t0, track } : null;
+    tm.style.display = timerCtx ? "" : "none";
+    tickTimer();
 
     const box = $("evChoices"), msg = $("evMsg");
     box.innerHTML = ""; msg.textContent = "";
     if (!p.res) {
       box.style.display = "flex"; $("evResult").style.display = "none";
-      const options = p.mentor >= 0 ? [p.mentor] : p.order;
-      if (p.mentor >= 0) {
-        $("evTitle").textContent = SETTINGS.mentoring.title;
-        $("evText").textContent = `${Logic.fill(SETTINGS.mentoring.text, ch.name)}\n\n[이번 상황] ${Logic.fill(ev.title, ch.name)}\n${Logic.fill(ev.text, ch.name)}`;
-      }
-      options.forEach((i) => {
+      const badges = (v) => ds.filter((r) => p.votes[r] === v).map((r) => `<span class="badge">${esc(nameOf(r))}</span>`).join("");
+      p.order.forEach((i) => {
         const c = ev.choices[i];
         const b = document.createElement("button");
         b.className = "btn" + (p.votes[role] === i ? " picked" : "");
         const locked = p.locked.includes(i);
         const cost = -((c.effects || {}).자산 || 0);
-        const voters = ds.filter((r) => p.votes[r] === i).map((r) => `<span class="badge">${esc(nameOf(r))}</span>`).join("");
-        b.innerHTML = `${p.mentor >= 0 ? "다음 ▶" : esc(Logic.fill(c.text, ch.name))}${locked ? ` (자산 ${cost} 필요)` : ""} ${voters}`;
+        // 투자처럼 결과가 운에 따라 갈리는 선택지는 확률을 보여 준다
+        const pr = Logic.probs(G, c);
+        const prTxt = pr ? `<small class="odds">🎲 ${pr.map((x) => `${x.good ? "성공" : "실패"} ${x.p}%`).join(" / ")}</small>` : "";
+        b.innerHTML = `${esc(Logic.fill(c.text, ch.name))}${locked ? ` (자산 ${cost} 필요)` : ""} ${prTxt} ${badges(i)}`;
         if (!deciding || locked) b.disabled = true;
         else b.onclick = () => act((G) => Logic.vote(G, track, role, i));
         box.appendChild(b);
       });
+      // 교수님 찬스: 조마다 한 번, 최고 선택이 정해진 이벤트에서만
+      const cb = document.createElement("button");
+      const can = Logic.canChance(G, p);
+      cb.className = "btn chance" + (p.votes[role] === Logic.CHANCE ? " picked" : "");
+      cb.innerHTML = `🎓 교수님 찬스 <small>${G.chanceUsed ? "(이미 사용함)" : p.mentor < 0 ? "(이 상황에선 쓸 수 없어요)" : "(조마다 1번 · 둘 다 누르면 사용)"}</small> ${badges(Logic.CHANCE)}`;
+      if (!deciding || !can) cb.disabled = true;
+      else cb.onclick = () => act((G) => Logic.vote(G, track, role, Logic.CHANCE));
+      box.appendChild(cb);
       const v = ds.map((r) => p.votes[r]);
       if (!deciding) msg.textContent = `${ds.map(nameOf).join(", ")} 님이 결정하고 있어요. 함께 이야기해 보세요!`;
       else if (v.every((x) => x !== undefined) && v[0] !== v[1]) msg.textContent = "의견이 달라요! 대화해서 같은 선택지를 골라 주세요.";
@@ -202,14 +217,15 @@
     } else {
       box.style.display = "none";
       const { c, out } = Logic.resultOf(p);
-      $("evText").textContent = `선택: ${Logic.fill(c.text, ch.name)}${p.res.m ? " (🎓 교수님의 조언)" : ""}`;
+      $("evText").textContent = `선택: ${Logic.fill(c.text, ch.name)}${p.res.m ? " (🎓 교수님 찬스)" : ""}${p.timedOut ? " (⏰ 시간 초과로 자동 결정)" : ""}`;
       $("evResultText").textContent = Logic.fill(out.result || "", ch.name);
       const d = p.res.d;
       $("evDeltas").innerHTML = (d ? `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">가족 자산 ${d > 0 ? "+" : ""}${d}</span>` : "")
         + (p.res.e ? `<span style="color:#2f8f5b">📚 교육 기회 +1</span>` : "")
         + (p.res.n ? `<span class="news-delta">📰 뉴스 영향 ${p.res.n > 0 ? "+" : ""}${p.res.n} · ${esc(p.res.nn)}</span>` : "");
       $("evInfo").style.display = ev.info ? "block" : "none";
-      $("evInfoText").textContent = Logic.fill(ev.info || "", ch.name);
+      $("evInfoText").innerHTML = Glossary.mark(Logic.fill(ev.info || "", ch.name));
+      $("evResultText").innerHTML = Glossary.mark(Logic.fill(out.result || "", ch.name));
       $("evResult").style.display = "block";
       const btn = $("evContinue");
       if (deciding) {
@@ -232,7 +248,8 @@
     $("endTitle").textContent = G.ending ? G.ending.title : "";
     $("endText").textContent = G.ending ? G.ending.text : "";
     $("endStats").innerHTML = [["가족 자산", G.asset], ["자녀 교육", G.chars.child.edu.length + "번"], ["부모 교육", G.chars.parent.edu.length + "번"]]
-      .map(([k, v]) => `<div class="stat"><div class="name">${k}<b>${v}</b></div></div>`).join("");
+      .map(([k, v]) => `<div class="stat"><div class="name">${k}<b>${v}</b></div></div>`).join("")
+      + `<div class="decile-line">🏠 출발 <b>${esc(G.cls)}</b> → 마지막 <b>${esc(Logic.decileOf(G.asset))}</b></div>`;
     const list = (ch) => ch.edu.length ? ch.edu.map((e) => `<li><small>${e.age}세</small>${esc(e.name)}</li>`).join("") : "<li>받은 교육이 없습니다.</li>";
     // 배운 이유
     const m = Logic.motiveCounts(G), tot = m.외적 + m.내적 || 1;
@@ -262,6 +279,7 @@
       const k = Object.keys(G.newsSeen).find((x) => !seen[x]);
       if (k !== undefined) {
         const item = newsById(+k, G.newsSeen[k]);
+        if (!item) return Breaking.hide();
         const i = G.log.findIndex((l) => l.k === "news" && l.t.includes(item.headline));
         const nx = G.log[i + 1];
         const shock = nx && nx.k === "news" && nx.t.startsWith("📰 뉴스 영향") ? nx.t.replace("📰 뉴스 영향: ", "우리 가족에게 온 변화 → ") : "";
@@ -293,6 +311,19 @@
     picking = null;
     renderLobby();
   }
+
+  // ── 선택 제한시간 ──
+  let timerCtx = null;
+  function tickTimer() {
+    const tm = $("evTimer");
+    if (!tm || !timerCtx) return;
+    const lim = Logic.limitMs(), left = Math.max(0, lim - (Date.now() - timerCtx.t0));
+    tm.querySelector("i").style.width = (left / lim) * 100 + "%";
+    tm.querySelector("span").textContent = `⏰ ${Math.ceil(left / 1000)}초`;
+    tm.classList.toggle("hurry", left < 10000);
+    if (left <= 0) { const t = timerCtx.track; timerCtx = null; act((G) => Logic.timeout(G, t)); }
+  }
+  setInterval(tickTimer, 500);
 
   $("playerName").value = store.get("mp_name") || "";
   $("backBtn").onclick = () => { picking = null; render(); };

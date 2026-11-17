@@ -34,7 +34,7 @@
     const groups = {};
     for (let i = 1; i <= n; i++) groups["g" + i] = { status: "waiting", cls: cls[i - 1] };
     // 이번 방에서 터질 뉴스: 시기마다 후보 중 하나를 무작위로 (반 전체가 같은 뉴스를 겪음)
-    const news = typeof NEWS !== "undefined" ? NEWS.slots.map((s) => Math.floor(Math.random() * s.length)) : null;
+    const news = typeof NEWS !== "undefined" ? (NEWS.fixed || NEWS.slots.map((s) => Math.floor(Math.random() * s.length))) : null;
     Net.set("", { config: { id: Date.now(), count: n, news }, groups });
   };
 
@@ -121,8 +121,23 @@
         <td>외적 ${m.외적} · 내적 ${m.내적}<div class="mini-motive"><div class="ext" style="width:${(m.외적 / tot) * 100}%"></div><div class="int" style="width:${(m.내적 / tot) * 100}%"></div></div></td>
         <td>${after}</td></tr>`;
     }).join("");
+    // 조별 순위: 교육(자녀 좋은 교육 가짓수), 자산(지금 가족 자산), 종합(두 순위의 합, 같으면 교육 순위 우선)
+    const rankBy = (val) => { const s = list.map((o) => val(o)).sort((a, b) => b - a); return (o) => 1 + s.indexOf(val(o)); };
+    const eduOf = ({ G }) => Logic.goodEdu(G.chars.child), assetOf = ({ G }) => G.asset;
+    const rEdu = rankBy(eduOf), rAsset = rankBy(assetOf);
+    const ranked = list.map((o, i) => ({ ...o, i, re: rEdu(o), ra: rAsset(o) }))
+      .sort((a, b) => (a.re + a.ra) - (b.re + b.ra) || a.re - b.re || b.G.asset - a.G.asset);
+    const medal = (n) => ["🥇", "🥈", "🥉"][n] || `${n + 1}위`;
+    const rankRows = ranked.map((o, n) => `<tr>
+        <td class="num">${medal(n)}</td>
+        <td><b style="color:${COLORS[o.i % COLORS.length]}">${o.g.slice(1)}조</b> <small>${esc(o.G.cls)}</small></td>
+        <td class="num">${eduOf(o)}가지 <small>(${o.re}위)</small></td>
+        <td class="num">${o.G.asset} <small>(${o.ra}위 · ${esc(Logic.decileOf(o.G.asset))})</small></td>
+        <td>${o.G.ended ? esc(o.G.ending && o.G.ending.title) : `진행 중 (자녀 ${o.G.chars.child.age}세)`}</td></tr>`).join("");
     const qs = typeof NEWS !== "undefined" ? NEWS.discuss : [];
     $("cmpView").innerHTML = `
+      <div class="compare-table-wrap"><h3>🏆 조별 순위 <small class="muted">교육 순위 + 자산 순위를 더해 작은 순서 (같으면 교육 우선)</small></h3>
+        <table class="compare-table"><tr><th>순위</th><th>조</th><th>자녀 좋은 교육</th><th>가족 자산 (마지막 분위)</th><th>엔딩</th></tr>${rankRows}</table></div>
       <div class="compare-chart"><b>가족 자산의 변화</b> <span class="muted">(빨간 점선 = 브레이킹 뉴스)</span>${svg}<div class="compare-legend">${legend}</div></div>
       <div class="compare-table-wrap"><table class="compare-table">
         <tr><th>조</th><th>소득분위</th><th>자산 (시작→지금)</th><th>엔딩</th><th>자녀 좋은 교육</th><th>받은 교육 (자녀/부모)</th><th>배운 이유</th><th>뉴스 직후 첫 선택</th></tr>
@@ -154,7 +169,7 @@
           const pp = G.pending[t], ev = Logic.evById(pp.ev);
           const votes = Logic.deciders(G, t).map((r) => {
             const v = pp.votes[r];
-            return `${esc(mem[r] ? mem[r].name : Logic.ROLES[r])}: ${v === undefined ? "…" : esc(Logic.fill(ev.choices[v].text, G.chars[t].name)).slice(0, 18)}`;
+            return `${esc(mem[r] ? mem[r].name : Logic.ROLES[r])}: ${v === undefined ? "…" : v === Logic.CHANCE ? "🎓 교수님 찬스" : esc(Logic.fill(ev.choices[v].text, G.chars[t].name)).slice(0, 18)}`;
           }).join(" / ");
           return `<div class="pend">${Logic.TRACK[t]} 「${esc(Logic.fill(ev.title, G.chars[t].name))}」${pp.res ? " ✔ 결과 확인 중" : `<br><small>${votes}</small>`}</div>`;
         }).join("");

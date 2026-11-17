@@ -2,7 +2,7 @@
 window.Breaking = (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  let shownKey = null, audio = null;
+  let shownKey = null, audio = null, autoT = null;
 
   // 짧은 경보음 (삐-뽀-삐-뽀)
   function beep() {
@@ -41,7 +41,9 @@ window.Breaking = (() => {
     $("bkShock").style.display = o.shock ? "" : "none";
     $("bkShock").textContent = o.shock || "";
     $("bkClose").style.display = o.live ? "none" : "";
-    $("bkClose").onclick = () => { hide(); if (o.onClose) o.onClose(); };
+    $("bkClose").onclick = () => { clearTimeout(autoT); autoT = null; hide(); if (o.onClose) o.onClose(); };
+    // 생방송이 끝난 뒤 보여 주는 우리 가족 변화 카드는 누르지 않아도 8초 뒤 저절로 닫힘
+    if (!o.live && !autoT) autoT = setTimeout(() => { autoT = null; $("bkClose").click(); }, 8000);
   }
   function hide() { const el = $("breaking"); if (el) el.classList.remove("open"); shownKey = null; }
   return { show, hide, beep };
