@@ -240,3 +240,7 @@ body.anchor-page { background: #120a0e; background-image: repeating-linear-gradi
 .feed-info { background: var(--paper2); border: 2px dashed var(--ink); padding: 6px 8px; margin-top: 6px; font-size: 14px; }
 /* 배경음악 버튼 */
 .bgm-btn { position: fixed; right: 12px; bottom: 124px; z-index: 40; font-size: 13px; padding: 6px 10px; }
+/* 관리자 뉴스 데스크 (예전 앵커 화면) */
+.news-desk { background: #1c1015; color: #fff; border: 3px solid #000; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.news-desk .muted { color: #c9a9b0; }
+.news-desk .bk-head { color: #fff; }

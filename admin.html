@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>배움의 일생 · 관리자</title>
   <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1794906538">
-  <link rel="stylesheet" href="css/multi.css?v=1794906538">
+  <link rel="stylesheet" href="css/style.css?v=1794906811">
+  <link rel="stylesheet" href="css/multi.css?v=1794906811">
 </head>
 <body class="admin">
   <!-- 비밀번호 -->
@@ -31,16 +31,22 @@
         <button id="createBtn" class="btn">새 게임 방 만들기</button>
         <button id="startAllBtn" class="btn primary">4명 모인 조 모두 시작</button>
       </div>
-      <p class="muted">학생 접속 주소: <b id="joinUrl"></b> · 앵커 화면: <b id="anchorUrl"></b> (비밀번호 <b id="anchorPw"></b>)</p>
+      <p class="muted">학생 접속 주소: <b id="joinUrl"></b></p>
       <div class="admin-tabs">
         <button id="tabProg" class="btn on">진행 상황</button>
         <button id="tabCmp" class="btn">📊 결과 비교</button>
       </div>
       <div id="progView">
-        <h3>📡 브레이킹 뉴스</h3>
-        <div id="newsPanel" class="news-panel"></div>
+        <h3>📡 브레이킹 뉴스 데스크 <small class="muted">원고를 읽고 송출 → 다 읽으면 종료</small></h3>
+        <div class="news-desk">
+          <div class="anchor-head"><span class="bk-label"><span class="bk-dot"></span>속보</span><b>뉴스 데스크</b><span id="onAir" class="on-air">OFF AIR</span></div>
+          <div id="slotList" class="slot-list"></div>
+          <div id="newsPanel" class="script-box"></div>
+        </div>
         <h3>조별 진행 상황</h3>
         <div id="groups" class="admin-grid"></div>
+        <h3>🎤 조별 소식 — 읽어 주기 <small class="muted">조마다 고른 선택·결과·평생교육 알아보기</small></h3>
+        <div id="feed" class="feed"></div>
       </div>
       <div id="cmpView" class="compare" style="display:none"></div>
     </div>
@@ -48,19 +54,19 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js?v=1794906538"></script>
-  <script src="js/net.js?v=1794906538"></script>
-  <script src="data/settings.js?v=1794906538"></script>
-  <script src="data/stages.js?v=1794906538"></script>
-  <script src="data/events.js?v=1794906538"></script>
-  <script src="data/events_more.js?v=1794906538"></script>
-  <script src="data/events_random.js?v=1794906538"></script>
-  <script src="data/events_stage.js?v=1794906538"></script>
-  <script src="data/events_late.js?v=1794906538"></script>
-  <script src="data/news.js?v=1794906538"></script>
-  <script src="data/endings.js?v=1794906538"></script>
-  <script src="js/logic.js?v=1794906538"></script>
-  <script src="js/admin.js?v=1794906538"></script>
+  <script src="js/firebase-config.js?v=1794906811"></script>
+  <script src="js/net.js?v=1794906811"></script>
+  <script src="data/settings.js?v=1794906811"></script>
+  <script src="data/stages.js?v=1794906811"></script>
+  <script src="data/events.js?v=1794906811"></script>
+  <script src="data/events_more.js?v=1794906811"></script>
+  <script src="data/events_random.js?v=1794906811"></script>
+  <script src="data/events_stage.js?v=1794906811"></script>
+  <script src="data/events_late.js?v=1794906811"></script>
+  <script src="data/news.js?v=1794906811"></script>
+  <script src="data/endings.js?v=1794906811"></script>
+  <script src="js/logic.js?v=1794906811"></script>
+  <script src="js/admin.js?v=1794906811"></script>
   <script>
   // 새 버전이 올라왔는데 브라우저가 예전 페이지를 기억하고 있으면, 새 페이지로 바로 바꿔 줌
   (function () {

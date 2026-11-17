@@ -191,7 +191,7 @@ const Logic = (() => {
       const k = newsSlotAt(G.year + 1);
       if (k >= 0 && news && news.pick && G.newsSeen[k] === undefined) {
         const item = newsItem(news.pick, k);
-        if (item && !(news.done && news.done[k])) { G.waitNews = k; return G; } // 앵커 발표를 기다림
+        if (item && !(news.done && news.done[k])) { G.waitNews = k; return G; } // 선생님(관리자)의 속보 송출을 기다림
         if (item) applyNews(G, k, item);
       }
       G.waitNews = null;

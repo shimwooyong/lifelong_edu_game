@@ -10,8 +10,6 @@
     document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === "panel"));
     $("modeTag").textContent = Net.mode === "firebase" ? "온라인(Firebase)" : "로컬 테스트 모드";
     $("joinUrl").textContent = location.href.replace(/admin\.html.*$/, "");
-    $("anchorUrl").textContent = location.href.replace(/admin\.html.*$/, "anchor.html");
-    $("anchorPw").textContent = window.ANCHOR_PASSWORD || "";
     Net.on("", (d) => { root = d; render(); });
   }
   $("pwBtn").onclick = () => {
@@ -59,25 +57,79 @@
   $("tabProg").onclick = () => { tab = "prog"; render(); };
   $("tabCmp").onclick = () => { tab = "cmp"; render(); };
 
-  // ── 브레이킹 뉴스 송출판 (앵커 화면과 같은 기능, 비상용) ──
+  // ── 브레이킹 뉴스 데스크: 시점 고르기 → 원고 읽기 → 송출 시작 → 다 읽으면 종료 ──
+  let view = null; // 보고 있는 뉴스 번호
   function renderNews() {
     const cfg = root.config, nw = root.news || {}, done = nw.done || {}, live = nw.live;
-    if (typeof NEWS === "undefined" || !cfg.news) { $("newsPanel").innerHTML = `<p class="muted">이 방은 뉴스 없이 만들어졌어요. 새 방을 만들면 뉴스가 들어갑니다.</p>`; return; }
-    const gs = root.groups || {};
-    $("newsPanel").innerHTML = NEWS.ages.map((age, k) => {
-      const it = Logic.newsItem(cfg.news, k);
-      const wait = Object.values(gs).filter((g) => g.game && g.game.waitNews === k).length;
-      const st = live === k ? "on" : done[k] ? "done" : "";
-      const btn = live === k ? `<button class="btn" data-end="${k}">■ 방송 종료</button>`
-        : done[k] ? `<span>✔ 발표 끝</span>` : `<button class="btn red" data-air="${k}">🔴 속보 송출</button>`;
-      return `<div class="news-slot ${st}"><div><b>${NEWS.birthYear + age}년</b> · 자녀 ${age}세</div>
-        <div>${esc(it.headline)}</div><div>📡 대기 중인 조: <b>${wait}</b></div>${btn}</div>`;
+    const isLive = typeof live === "number";
+    $("onAir").className = "on-air" + (isLive ? " live" : "");
+    $("onAir").textContent = isLive ? "● ON AIR" : "OFF AIR";
+    if (typeof NEWS === "undefined" || !cfg.news) {
+      $("slotList").innerHTML = "";
+      $("newsPanel").innerHTML = `<p class="muted">이 방은 뉴스 없이 만들어졌어요. 새 방을 만들면 뉴스가 들어갑니다.</p>`;
+      return;
+    }
+    const gs = Object.values(root.groups || {}).filter((g) => g.game);
+    const next = NEWS.ages.findIndex((_, k) => !done[k]);
+    if (view == null || (isLive && view !== live)) view = isLive ? live : Math.max(0, next);
+
+    // 시점 목록
+    $("slotList").innerHTML = NEWS.ages.map((age, k) => {
+      const wait = gs.filter((g) => g.game.waitNews === k).length;
+      const st = live === k ? "on" : done[k] ? "done" : k === next ? "next" : "";
+      return `<button class="slot-btn ${st} ${view === k ? "sel" : ""}" data-k="${k}">
+        <b>${NEWS.birthYear + age}년</b><small>${live === k ? "방송 중" : done[k] ? "✔ 발표 끝" : `대기 ${wait}/${gs.length}조`}</small></button>`;
     }).join("");
-    $("newsPanel").querySelectorAll("[data-air]").forEach((b) => (b.onclick = () => Net.set("news/live", +b.dataset.air)));
-    $("newsPanel").querySelectorAll("[data-end]").forEach((b) => (b.onclick = () => {
-      const k = +b.dataset.end;
-      Net.set(`news/done/${k}`, true).then(() => Net.set("news/live", null));
-    }));
+    $("slotList").querySelectorAll(".slot-btn").forEach((b) => (b.onclick = () => { view = +b.dataset.k; render(); }));
+
+    // 원고와 송출 버튼
+    const k = view, it = Logic.newsItem(cfg.news, k), age = NEWS.ages[k];
+    const wait = gs.filter((g) => g.game.waitNews === k).length;
+    const reached = gs.filter((g) => g.game.waitNews === k || g.game.year >= age).length;
+    const lines = it.script.map(([who, t], n) => `<div class="line ${n % 2 ? "a2" : "a1"}"><span class="who">${esc(who.replace("앵커", "읽기"))}</span><p>${esc(t)}</p></div>`).join("");
+    let ctrl;
+    if (live === k) ctrl = `<button id="endBtn" class="btn primary big">■ 방송 종료 · 게임 다시 시작</button>`;
+    else if (done[k]) ctrl = `<p class="muted">이미 발표한 뉴스예요.</p>`;
+    else if (isLive) ctrl = `<p class="muted">다른 뉴스를 방송 중이에요. 먼저 종료해 주세요.</p>`;
+    else ctrl = `<button id="airBtn" class="btn red big">🔴 속보 송출 시작</button>
+      <p class="muted">이 시점에 도착해 기다리는 조: <b>${wait}</b> / 시작한 조 ${gs.length} · ${reached < gs.length ? "아직 도착하지 않은 조가 있어요. 대부분 모이면 송출하세요." : "모든 조가 도착했어요!"}</p>`;
+    $("newsPanel").innerHTML = `
+      <div class="bk-date">${NEWS.birthYear + age}년 ${it.month || 1}월 · 자녀 ${age}세 시점</div>
+      <h2 class="bk-head">${esc(it.headline)}</h2>
+      <h3>📜 원고 (송출하고 읽어 주세요)</h3>
+      <div class="lines">${lines}</div>
+      <h3>📌 마지막에 덧붙일 말 — 이 뉴스로 바뀌는 세상</h3>
+      <ul class="bk-changes">${it.changes.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
+      <div class="ctrl">${ctrl}</div>`;
+    if ($("airBtn")) $("airBtn").onclick = () => Net.set("news/live", k);
+    if ($("endBtn")) $("endBtn").onclick = () => Net.set(`news/done/${k}`, true).then(() => Net.set("news/live", null));
+  }
+
+  // ── 조별 소식 읽어 주기: 조마다 지금 진행 중인 이벤트와 결과, 알아보기 ──
+  function renderFeed() {
+    const gs = (root && root.groups) || {};
+    const keys = order(gs).filter((g) => gs[g].game);
+    if (!keys.length) { $("feed").innerHTML = `<p class="muted">아직 시작한 조가 없어요.</p>`; return; }
+    $("feed").innerHTML = keys.map((g) => {
+      const G = Logic.normalize(gs[g].game), c = G.chars.child;
+      const head = `<div class="feed-head"><b>${g.slice(1)}조</b> ${esc(c.name)}네 · 자녀 ${c.age}세 · 자산 ${G.asset}</div>`;
+      if (G.ended) return `<div class="feed-card">${head}<p>🏁 엔딩: <b>${esc(G.ending && G.ending.title)}</b> (마지막 ${esc(Logic.decileOf(G.asset))})</p></div>`;
+      const ts = Object.keys(G.pending);
+      if (!ts.length) {
+        const last = G.log.filter((l) => l.k === "event" || l.k === "news").slice(-1)[0];
+        return `<div class="feed-card dim">${head}<p class="muted">다음 이벤트로 넘어가는 중… ${last ? "· 최근: " + esc(last.t) : ""}</p></div>`;
+      }
+      return ts.map((t) => {
+        const p = G.pending[t], ev = Logic.evById(p.ev), ch = G.chars[t];
+        const title = `${Logic.TRACK[t]} ${ch.age}세 「${esc(Logic.fill(ev.title, ch.name))}」`;
+        if (!p.res) return `<div class="feed-card">${head}<p>${title} — 고민 중…</p></div>`;
+        const { c: ch2, out } = Logic.resultOf(p);
+        return `<div class="feed-card read">${head}<p>${title}</p>
+          <p class="feed-pick">▶ 선택: ${esc(Logic.fill(ch2.text, ch.name))}${p.res.m ? " (🎓 교수님 찬스)" : ""}${p.timedOut ? " (⏰ 시간 초과)" : ""}</p>
+          <p class="feed-result">${esc(Logic.fill(out.result || "", ch.name))}</p>
+          ${ev.info ? `<div class="feed-info"><b>📚 평생교육 알아보기</b><p>${esc(Logic.fill(ev.info, ch.name))}</p></div>` : ""}</div>`;
+      }).join("");
+    }).join("");
   }
 
   // ── 결과 비교 ──
@@ -150,8 +202,9 @@
     $("tabProg").classList.toggle("on", tab === "prog"); $("tabCmp").classList.toggle("on", tab === "cmp");
     $("progView").style.display = tab === "prog" ? "" : "none";
     $("cmpView").style.display = tab === "cmp" ? "" : "none";
-    if (!root || !root.config) { $("newsPanel").innerHTML = ""; $("groups").innerHTML = `<p class="muted">아직 방이 없어요. 조 수를 입력하고 '새 게임 방 만들기'를 누르세요.</p>`; return; }
+    if (!root || !root.config) { $("newsPanel").innerHTML = ""; $("slotList").innerHTML = ""; $("feed").innerHTML = ""; $("groups").innerHTML = `<p class="muted">아직 방이 없어요. 조 수를 입력하고 '새 게임 방 만들기'를 누르세요.</p>`; return; }
     renderNews();
+    renderFeed();
     if (tab === "cmp") renderCompare();
     $("groupCount").value = root.config.count;
     $("groups").innerHTML = order(gs).map((g) => {

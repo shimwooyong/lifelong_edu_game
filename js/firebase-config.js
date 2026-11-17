@@ -12,8 +12,6 @@ window.GAME_ROOT = "lifelong";
 // 관리자 비밀번호 (admin.html 입장용). 권한을 줄 사람에게만 알려 주세요.
 window.ADMIN_PASSWORD = "2607";
 
-// 앵커(뉴스 발표 담당 학생) 화면 비밀번호 (anchor.html 입장용)
-window.ANCHOR_PASSWORD = "0000";
 
 // 주소 뒤에 ?local 을 붙이면 서버 대신 이 브라우저 안에서만 도는 테스트 모드
 if (/[?&]local\b/.test(location.search)) window.FIREBASE_CONFIG = {};
