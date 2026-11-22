@@ -9,3 +9,4 @@ desktop.ini
 # 빌드 도구를 쓰게 될 경우
 node_modules/
 dist/
+.claude/tmp/

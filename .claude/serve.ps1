@@ -10,6 +10,13 @@ while ($listener.IsListening) {
   $ctx = $listener.GetContext()
   $path = [Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath).TrimStart("/")
   if ($path -eq "") { $path = "index.html" }
+  # 개발용: POST /__save/파일이름 → .claude/tmp/ 에 저장 (그림 뽑기 등)
+  if ($ctx.Request.HttpMethod -eq "POST" -and $path.StartsWith("__save/")) {
+    $dir = Join-Path $root ".claude/tmp"; New-Item -ItemType Directory -Force $dir | Out-Null
+    $ms = New-Object System.IO.MemoryStream; $ctx.Request.InputStream.CopyTo($ms)
+    [IO.File]::WriteAllBytes((Join-Path $dir ($path.Substring(7))), $ms.ToArray())
+    $ctx.Response.StatusCode = 200; $ctx.Response.Close(); continue
+  }
   $file = Join-Path $root $path
   if (Test-Path $file -PathType Leaf) {
     $bytes = [IO.File]::ReadAllBytes($file)
