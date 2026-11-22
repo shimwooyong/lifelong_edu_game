@@ -1,6 +1,8 @@
 ﻿# 게임 규칙 발표 자료(pptx)를 PowerPoint로 만드는 스크립트
 # 다시 만들려면: PowerShell에서 이 파일을 실행 (PowerPoint가 설치된 PC)
 $ErrorActionPreference = "Stop"
+# 발표 파일이 PowerPoint에 열려 있으면 덮어쓸 수 없으니 먼저 닫기
+try { [IO.File]::Open((Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "배움의일생_게임규칙.pptx"), "Open", "ReadWrite", "None").Close() } catch [IO.FileNotFoundException] {} catch { throw "배움의일생_게임규칙.pptx가 열려 있어요. PowerPoint에서 닫은 뒤 다시 실행하세요." }
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $img = Join-Path $dir "그림"
 $out = Join-Path $dir "배움의일생_게임규칙.pptx"
@@ -204,13 +206,22 @@ for ($i = 0; $i -lt 4; $i++) {
   T $s $steps[$i][1] ($x + 18) 194 170 28 18 $INK $true | Out-Null
   T $s $steps[$i][2] ($x + 18) 228 168 50 13 $MUTED | Out-Null
 }
-T $s "shimwooyong.github.io/lifelong_edu_game" 41 330 880 40 26 $YEL $true 2 | Out-Null
-T $s "📖 도움말 버튼   ·   밑줄 친 용어를 누르면 설명   ·   🔊 음악 켜고 끄기" 41 390 880 30 15 $GRAY $false 2 | Out-Null
+# 접속: 휴대폰은 QR, 노트북은 주소
+T $s "📱 휴대폰은 오른쪽 QR코드를 카메라로 찍어요" 41 318 680 26 16 $GRAY | Out-Null
+T $s "💻 노트북은 주소창에 이 주소를 입력해요" 41 350 680 26 16 $GRAY | Out-Null
+T $s "shimwooyong.github.io/lifelong_edu_game" 41 386 680 40 26 $YEL $true | Out-Null
+T $s "📖 도움말 버튼  ·  밑줄 친 용어를 누르면 설명  ·  🔊 음악 켜고 끄기" 41 452 680 24 13 $GRAY | Out-Null
+Box $s 772 300 148 148 $WHITE $YEL | Out-Null
+$s.Shapes.AddPicture((Join-Path $dir "QR_게임접속.png"), 0, -1, 776, 304, 140, 140) | Out-Null
+T $s "카메라로 찍으면 바로 접속" 762 460 168 20 12 $GRAY $false 2 | Out-Null
+
 Notes $s "이제 시작해 볼게요. 화면의 주소로 들어가서 우리 조를 고르고, 부모나 자녀 자리를 골라 이름을 입력하세요. 대기실에 들어가면 게임 방법이 자동으로 한 번 뜹니다. 네 명이 다 모이면 제가 게임을 시작할게요. 게임 중에 모르는 용어가 나오면 밑줄 친 글자를 누르거나 도움말 버튼을 눌러 보세요. 그럼 즐겁게 배움의 일생을 살아 봅시다!"
 
 $pres.SaveAs($out, 24)
 # 검수용 그림
 $qa = Join-Path $dir "..\.claude\tmp"; New-Item -ItemType Directory -Force $qa | Out-Null
 for ($i = 1; $i -le $pres.Slides.Count; $i++) { $pres.Slides($i).Export((Join-Path $qa "slide$i.png"), "PNG", 1280, 720) }
-$pres.Close(); $app.Quit()
+$pres.Close()
+# 사용자가 따로 열어 둔 PowerPoint 창이 있으면 끄지 않음
+if ($app.Presentations.Count -eq 0) { $app.Quit() }
 "저장: $out"
