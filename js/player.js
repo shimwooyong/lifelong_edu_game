@@ -272,20 +272,7 @@
     if (inRoom && typeof live === "number" && cfg.news) {
       return Breaking.show(Logic.newsItem(cfg.news, live), live, { live: true });
     }
-    const G = grp && grp.game && Logic.normalize(grp.game);
-    if (inRoom && G) {
-      const key = `mp_newscard_${cfg.id}_${s.g}`;
-      const seen = store.get(key) || {};
-      const k = Object.keys(G.newsSeen).find((x) => !seen[x]);
-      if (k !== undefined) {
-        const item = newsById(+k, G.newsSeen[k]);
-        if (!item) return Breaking.hide();
-        const i = G.log.findIndex((l) => l.k === "news" && l.t.includes(item.headline));
-        const nx = G.log[i + 1];
-        const shock = nx && nx.k === "news" && nx.t.startsWith("📰 뉴스 영향") ? nx.t.replace("📰 뉴스 영향: ", "우리 가족에게 온 변화 → ") : "";
-        return Breaking.show(item, +k, { live: false, shock, onClose: () => { seen[k] = 1; store.set(key, seen); render(); } });
-      }
-    }
+    // 방송이 끝나면 바로 닫힘. 뒤에 다시 뜨는 카드는 없음 (우리 가족 변화는 기록·결과 줄에 나옴)
     Breaking.hide();
   }
 

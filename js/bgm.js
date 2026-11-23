@@ -39,7 +39,7 @@ window.BGM = (() => {
 
   // ── 속보 테마: 긴장감 (브레이킹 뉴스가 떠 있는 동안) ──
   // 반음씩 갈아대는 16분음표 저음 + 마디마다 반음씩 올라가는 조 + 불안한 감7화음 + 심장 박동 + 스네어 롤
-  const NSTEP = 60 / 168 / 4; // 168BPM 16분음표
+  const NSTEP = 60 / 184 / 4; // 184BPM 16분음표
   const N_ROOT = [40, 41, 42, 43]; // E → F → F# → G (계속 조여 오는 느낌)
   let noise = null;
   function noiseHit(t, vol, dur, type, freq) {
@@ -63,23 +63,39 @@ window.BGM = (() => {
     g.gain.setTargetAtTime(0, t + dur, 0.05);
     o.connect(g); g.connect(bus); o.start(t); l.start(t); o.stop(t + dur + 0.3); l.stop(t + dur + 0.3);
   }
+  // 사이렌: 음이 위아래로 울부짖듯 오르내림
+  function siren(t, dur, lo, hi, vol) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(lo, t); o.frequency.linearRampToValueAtTime(hi, t + dur / 2); o.frequency.linearRampToValueAtTime(lo, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.05); g.gain.setTargetAtTime(0, t + dur - 0.05, 0.04);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.2);
+  }
+  // 과장된 속보 테마 (2026-11-23 피드백: 더 긴박하고 다급하게)
+  // 184BPM, 쿵쿵 몰아치는 북, 숨 가쁜 16분 고음 경보 멜로디, 엇박 금관 찌르기, 사이렌, 마디마다 반음씩 올라감
+  const RUN = [0, 12, 11, 12, 7, 12, 6, 12, 0, 12, 11, 12, 13, 12, 6, 7]; // 쉴 틈 없이 달리는 고음 (반음·증4도로 불안하게)
   function playNews(i, t) {
     const bar = Math.floor(i / 16) % 4, s = i % 16, r = N_ROOT[bar];
-    // 갈아대는 저음: 근음-근음-반음 위-근음
-    tone(hz(r + [0, 0, 1, 0][s % 4]), t, NSTEP * 0.9, "square", 0.045, 0.003, 0.02);
-    if (s % 4 === 0) tone(hz(r - 12), t, NSTEP * 3.5, "triangle", 0.1, 0.005, 0.05);
-    // 심장 박동 (쿵-쿵, 쉬고)
-    if (s === 0) heart(t, 0.32);
-    if (s === 3) heart(t, 0.22);
-    // 불안한 감7화음을 엇박에 찌르기
-    if (s === 0 || s === 6 || s === 10) [0, 3, 6, 9].forEach((d) => tone(hz(r + 24 + d), t, NSTEP * 1.6, "square", 0.012, 0.003, 0.05));
-    // 위에서 떨리며 버티는 긴 음 → 마디 후반엔 증4도로 흔들림
-    if (s === 0) eerie(hz(r + 36), t, NSTEP * 7.5, 0.03);
-    if (s === 8 || s === 12) eerie(hz(r + 42), t, NSTEP * 3.5, 0.028);
-    if (s === 10 || s === 14) eerie(hz(r + 41), t, NSTEP * 1.8, 0.024);
-    // 마지막 마디: 스네어 롤이 점점 커짐
-    if (bar === 3 && s >= 8) noiseHit(t, 0.02 + (s - 8) * 0.008, 0.06, "bandpass", 1800);
-    else if (s === 4 || s === 12) noiseHit(t, 0.03, 0.08, "bandpass", 1800);
+    // 숨 가쁜 고음 경보 멜로디
+    tone(hz(r + 36 + RUN[s]), t, NSTEP * 0.75, "square", 0.03, 0.002, 0.02);
+    // 갈아대는 저음 옥타브 왕복
+    tone(hz(r + (s % 2 ? 12 : 0) + (s % 8 === 6 ? 1 : 0)), t, NSTEP * 0.85, "square", 0.05, 0.002, 0.02);
+    if (s % 4 === 0) tone(hz(r - 12), t, NSTEP * 3.5, "triangle", 0.13, 0.004, 0.05);
+    // 북: 박마다 쿵, 마디 끝은 쿵쿵쿵쿵
+    if (s % 4 === 0 || (s >= 12 && s % 2 === 0)) heart(t, 0.4);
+    // 스네어: 2·4박 + 마지막 마디는 점점 커지는 롤
+    if (bar === 3 && s >= 4) noiseHit(t, 0.03 + (s - 4) * 0.006, 0.06, "bandpass", 2000);
+    else if (s === 4 || s === 12) noiseHit(t, 0.07, 0.12, "bandpass", 1800);
+    // 하이햇: 쉬지 않고 칙칙칙
+    if (s % 2 === 1) noiseHit(t, 0.012, 0.03, "highpass", 7000);
+    // 금관 찌르기: 감7화음을 엇박에 '빠밤!'
+    if (s === 0 || s === 3 || s === 6 || s === 10) [0, 3, 6, 9].forEach((d) => tone(hz(r + 24 + d), t, NSTEP * (s === 0 ? 2.5 : 1.2), "sawtooth", 0.014, 0.002, 0.04));
+    // 떨리는 긴 경고음
+    if (s === 8) eerie(hz(r + 42), t, NSTEP * 7, 0.022);
+    // 사이렌: 두 마디마다 울부짖기
+    if (s === 0 && bar % 2 === 0) siren(t, NSTEP * 16, hz(r + 48), hz(r + 55), 0.018);
+    // 한 바퀴 끝: 위로 치솟는 음 → 다음 바퀴 처음으로
+    if (bar === 3 && s === 12) siren(t, NSTEP * 4, hz(r + 24), hz(r + 60), 0.02);
   }
 
   function playMain(i, t) {
