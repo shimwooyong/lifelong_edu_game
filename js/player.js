@@ -97,6 +97,7 @@
     Net.tx(`groups/${s.g}`, (grp) => {
       if (!grp.game) return;
       const G = Logic.normalize(grp.game);
+      G.seats = Object.keys(grp.members || {}); // 지금 들어와 있는 역할 (결원 처리)
       fn(G);
       grp.game = G;
       if (G.ended) grp.status = "ended";

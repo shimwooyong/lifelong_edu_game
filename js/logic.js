@@ -147,7 +147,16 @@ const Logic = (() => {
   }
 
   // 지금 이 이벤트를 결정하는 역할
-  const deciders = (G, track) => (track === "parent" || G.year < M().independentAge ? ["p1", "p2"] : ["c1", "c2"]);
+  // 빈자리(결원)가 있으면 들어와 있는 사람만 결정 → 한 명이 고르면 바로 확정. 두 자리 다 비면 조에 있는 사람 모두가 결정
+  const deciders = (G, track) => {
+    const base = track === "parent" || G.year < M().independentAge ? ["p1", "p2"] : ["c1", "c2"];
+    const seats = G.seats;
+    if (!seats || !seats.length) return base;
+    const here = base.filter((r) => seats.includes(r));
+    if (here.length) return here;
+    const all = Object.keys(ROLES).filter((r) => seats.includes(r));
+    return all.length ? all : base;
+  };
 
   function findEvent(G, track) {
     const ch = G.chars[track];

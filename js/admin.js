@@ -41,6 +41,7 @@
     Net.tx(`groups/${g}`, (grp) => {
       if (grp.status !== "waiting") return;
       grp.game = Logic.newGame(names[Math.floor(Math.random() * names.length)], grp.cls);
+      grp.game.seats = Object.keys(grp.members || {}); // 결원이 있으면 들어온 사람만 결정
       grp.status = "playing";
       return grp;
     });
