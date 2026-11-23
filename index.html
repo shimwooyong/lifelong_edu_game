@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>배움의 일생</title>
   <link href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=1795423141">
-  <link rel="stylesheet" href="css/multi.css?v=1795423141">
+  <link rel="stylesheet" href="css/style.css?v=1795423199">
+  <link rel="stylesheet" href="css/multi.css?v=1795423199">
 </head>
 <body>
   <!-- 조 고르기 -->
@@ -36,7 +36,7 @@
     <div class="pad center">
       <h2 id="waitTitle"></h2>
       <div id="waitSeats" class="seat-grid"></div>
-      <p class="muted">4명이 모두 들어오면 선생님이 게임을 시작합니다.</p>
+      <p class="muted">4명이 모두 들어오면 진행자가 게임을 시작합니다.</p>
       <button id="leaveBtn" class="link">나가기</button>
     </div>
   </section>
@@ -124,7 +124,7 @@
       <ul id="bkChanges" class="bk-changes"></ul>
       <div id="bkShock" class="bk-shock"></div>
       <button id="bkClose" class="btn bk-btn">확인했어요</button>
-      <p id="bkWait" class="bk-wait">선생님의 속보 발표를 들어 주세요…</p>
+      <p id="bkWait" class="bk-wait">진행자의 속보 발표를 들어 주세요…</p>
     </div>
     <div class="bk-stripes bottom"></div>
     <div class="bk-ticker"><span class="bk-tk-label">속보</span><div class="bk-tk-track"><div id="bkTicker" class="bk-tk-text"></div></div></div>
@@ -133,26 +133,26 @@
   <!-- 서버 -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script src="js/firebase-config.js?v=1795423141"></script>
-  <script src="js/net.js?v=1795423141"></script>
+  <script src="js/firebase-config.js?v=1795423199"></script>
+  <script src="js/net.js?v=1795423199"></script>
   <!-- 게임 데이터: 새 스크립트 파일은 여기와 admin.html, 혼자하기.html에 추가 -->
-  <script src="data/settings.js?v=1795423141"></script>
-  <script src="data/stages.js?v=1795423141"></script>
-  <script src="data/events.js?v=1795423141"></script>
-  <script src="data/events_more.js?v=1795423141"></script>
-  <script src="data/events_random.js?v=1795423141"></script>
-  <script src="data/events_stage.js?v=1795423141"></script>
-  <script src="data/events_late.js?v=1795423141"></script>
-  <script src="data/news.js?v=1795423141"></script>
-  <script src="data/endings.js?v=1795423141"></script>
-  <script src="data/glossary.js?v=1795423141"></script>
-  <script src="js/help.js?v=1795423141"></script>
+  <script src="data/settings.js?v=1795423199"></script>
+  <script src="data/stages.js?v=1795423199"></script>
+  <script src="data/events.js?v=1795423199"></script>
+  <script src="data/events_more.js?v=1795423199"></script>
+  <script src="data/events_random.js?v=1795423199"></script>
+  <script src="data/events_stage.js?v=1795423199"></script>
+  <script src="data/events_late.js?v=1795423199"></script>
+  <script src="data/news.js?v=1795423199"></script>
+  <script src="data/endings.js?v=1795423199"></script>
+  <script src="data/glossary.js?v=1795423199"></script>
+  <script src="js/help.js?v=1795423199"></script>
   <!-- 게임 -->
-  <script src="js/logic.js?v=1795423141"></script>
-  <script src="js/pixel.js?v=1795423141"></script>
-  <script src="js/breaking.js?v=1795423141"></script>
-  <script src="js/bgm.js?v=1795423141"></script>
-  <script src="js/player.js?v=1795423141"></script>
+  <script src="js/logic.js?v=1795423199"></script>
+  <script src="js/pixel.js?v=1795423199"></script>
+  <script src="js/breaking.js?v=1795423199"></script>
+  <script src="js/bgm.js?v=1795423199"></script>
+  <script src="js/player.js?v=1795423199"></script>
   <script>
   // 새 버전이 올라왔는데 브라우저가 예전 페이지를 기억하고 있으면, 새 페이지로 바로 바꿔 줌
   (function () {

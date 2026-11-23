@@ -31,7 +31,7 @@
   function renderLobby() {
     const cfg = root && root.config, groups = (root && root.groups) || {};
     show("lobby");
-    if (!cfg) { $("groupList").innerHTML = ""; $("lobbyMsg").textContent = "선생님이 아직 게임을 열지 않았어요. 잠시 기다려 주세요."; return; }
+    if (!cfg) { $("groupList").innerHTML = ""; $("lobbyMsg").textContent = "진행자가 아직 게임을 열지 않았어요. 잠시 기다려 주세요."; return; }
     $("lobbyMsg").textContent = "";
     $("groupList").innerHTML = Object.keys(groups).sort((a, b) => a.slice(1) - b.slice(1)).map((g) => {
       const n = Object.keys(membersOf(groups[g])).length;
@@ -141,10 +141,10 @@
       const who = Logic.deciders(G, t).map((r) => esc(mem[r] ? mem[r].name : Logic.ROLES[r])).join("·");
       return `<div>${Logic.TRACK[t]} 이벤트 「${esc(Logic.fill(ev.title, G.chars[t].name))}」 — ${p.res ? "결과 확인 중" : who + " 결정 중"}</div>`;
     }).join("");
-    // 속보 대기: 이 조가 뉴스 시점에 도착했지만 아직 선생님이 송출하지 않음
+    // 속보 대기: 이 조가 뉴스 시점에 도착했지만 아직 진행자가 송출하지 않음
     const nc = newsCtx();
     const waiting = G.waitNews != null && !(nc.done && nc.done[G.waitNews]);
-    if (waiting) $("statusLine").innerHTML = `<div class="news-wait">📡 곧 브레이킹 뉴스가 발표됩니다. 선생님을 주목하세요!</div>`;
+    if (waiting) $("statusLine").innerHTML = `<div class="news-wait">📡 곧 브레이킹 뉴스가 발표됩니다. 진행자를 주목하세요!</div>`;
     $("nextBtn").disabled = tracks.length > 0 || waiting;
     $("nextBtn").textContent = tracks.length ? "⏳ 이벤트 진행 중" : waiting ? "📡 속보 대기 중…" : "▶ 다음 이벤트";
     $("nextBtn").classList.toggle("news-wait-btn", waiting);
