@@ -125,7 +125,7 @@
         if (!p.res) return `<div class="feed-card">${head}<p>${title} — 고민 중…</p></div>`;
         const { c: ch2, out } = Logic.resultOf(p);
         return `<div class="feed-card read">${head}<p>${title}</p>
-          <p class="feed-pick">▶ 선택: ${esc(Logic.fill(ch2.text, ch.name))}${p.res.m ? " (🎓 교수님 찬스)" : ""}${p.timedOut ? " (⏰ 시간 초과)" : ""}</p>
+          <p class="feed-pick">▶ 선택: ${esc(Logic.fill(ch2.text, ch.name))}${p.res.m ? " (💡 Help)" : ""}${p.timedOut ? " (⏰ 시간 초과)" : ""}</p>
           <p class="feed-result">${esc(Logic.fill(out.result || "", ch.name))}</p>
           ${ev.info ? `<div class="feed-info"><b>📚 평생교육 알아보기</b><p>${esc(Logic.fill(ev.info, ch.name))}</p></div>` : ""}</div>`;
       }).join("");
@@ -222,7 +222,7 @@
           const pp = G.pending[t], ev = Logic.evById(pp.ev);
           const votes = Logic.deciders(G, t).map((r) => {
             const v = pp.votes[r];
-            return `${esc(mem[r] ? mem[r].name : Logic.ROLES[r])}: ${v === undefined ? "…" : v === Logic.CHANCE ? "🎓 교수님 찬스" : esc(Logic.fill(ev.choices[v].text, G.chars[t].name)).slice(0, 18)}`;
+            return `${esc(mem[r] ? mem[r].name : Logic.ROLES[r])}: ${v === undefined ? "…" : v === Logic.CHANCE ? "💡 Help" : esc(Logic.fill(ev.choices[v].text, G.chars[t].name)).slice(0, 18)}`;
           }).join(" / ");
           return `<div class="pend">${Logic.TRACK[t]} 「${esc(Logic.fill(ev.title, G.chars[t].name))}」${pp.res ? " ✔ 결과 확인 중" : `<br><small>${votes}</small>`}</div>`;
         }).join("");

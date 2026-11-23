@@ -164,10 +164,10 @@ const Logic = (() => {
     const ch = G.chars[track];
     ch.done[ev.id] = true;
     const idx = ev.choices.map((_, i) => i).filter((i) => meets(G, ch, ev.choices[i].requires));
-    // mentor: 교수님 찬스로 골라질 '최고 선택' 번호(-1이면 이 이벤트에선 찬스 못 씀), t0: 선택 시작 시각(타이머)
+    // mentor: Help로 골라질 '최고 선택' 번호(-1이면 이 이벤트에선 찬스 못 씀), t0: 선택 시작 시각(타이머)
     const p = { ev: ev.id, order: [], locked: [], mentor: -1, votes: {}, ack: {}, t0: Date.now() };
 
-    // 교수님 찬스: 최고 선택이 정해진(뻔하지 않은) 이벤트에서만, 인생 양끝 구간 제외
+    // Help: 최고 선택이 정해진(뻔하지 않은) 이벤트에서만, 인생 양끝 구간 제외
     const sw = mentorSwap(G, ev.id);
     const swIdx = sw ? idx.find((i) => ev.choices[i].text.includes(sw.pick)) : undefined;
     const best = swIdx !== undefined ? swIdx : idx.find((i) => ev.choices[i].mentor);
@@ -252,10 +252,10 @@ const Logic = (() => {
       G.afterNews[G.newsJust] = { w: track, ev: fill(ev.title, ch.name), c: fill(c.text, ch.name) };
       G.newsJust = null;
     }
-    addLog(G, `${mentored ? "🎓 교수님 찬스 · " : ""}${fill(ev.title, ch.name)} → ${fill(c.text, ch.name)}`, "event", track);
+    addLog(G, `${mentored ? "💡 Help · " : ""}${fill(ev.title, ch.name)} → ${fill(c.text, ch.name)}`, "event", track);
   }
 
-  const CHANCE = -2; // 투표값: 교수님 찬스
+  const CHANCE = -2; // 투표값: Help
   const canChance = (G, p) => p && p.mentor >= 0 && !G.chanceUsed;
   // 투표값 v로 확정 (찬스면 최고 선택 + 찬스 사용 처리)
   function settle(G, track, v) {
@@ -264,7 +264,7 @@ const Logic = (() => {
     else resolve(G, track, v);
   }
 
-  // 선택(투표): 결정하는 두 사람이 같은 선택지(또는 둘 다 교수님 찬스)를 고르면 확정
+  // 선택(투표): 결정하는 두 사람이 같은 선택지(또는 둘 다 Help)를 고르면 확정
   function vote(G, track, role, i) {
     const p = G.pending[track];
     if (!p || p.res || !deciders(G, track).includes(role)) return G;

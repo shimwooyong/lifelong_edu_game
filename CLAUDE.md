@@ -10,7 +10,7 @@
   - 관리자 '📊 결과 비교' 탭: 자산 그래프(G.hist)·엔딩·배운 이유(외적/내적, logic.js motiveOf)·뉴스 직후 첫 선택(G.afterNews)·토론 질문.
   - 테스트: 주소 뒤 `?local`(서버 대신 브라우저 안), 학생 여러 명은 `?local&p=1`처럼.
 - 배경음악: `js/bgm.js`가 코드로 연주하는 잔잔한 8비트 곡(C-Am-F-G 8마디 반복, 80BPM, 멜로디 레가토·16분 분산화음·사인 패드·5도 베이스·메아리(delay) 버스). index·혼자하기에만. 첫 클릭 때 시작, 🔊 버튼으로 켜고 끔(localStorage bgm_on), 속보 배너가 떠 있는 동안은 긴장감 속보 테마(168BPM 16분음표, E→F→F#→G 반음씩 상승, 반음 갈아대는 저음, 감7화음, 비브라토 긴 음·증4도, 심장 박동, 마지막 마디 스네어 롤. 원곡 모방 없이 기법만 사용)로 바뀜(BGM.news, breaking.js show/hide에서 호출).
-- **혼자하기.html**: 1인용(js/engine.js, 80세까지). 뉴스(news.js, 나이 되면 자동 송출·8초 자동 닫힘)·교수님 찬스 버튼 1번·🎲확률·60초 타이머(settings soloChoiceSeconds, 0이면 끔)·마지막 분위·도움말(HELP_MODE="solo"→HELP.soloGuide) 포함. multi.css도 불러옴(body.solo로 통계 2칸). 모바일용.html은 이걸 합친 파일. 백업: `백업/v1_혼자하기`, git 태그 v1-solo.
+- **혼자하기.html**: 1인용(js/engine.js, 80세까지). 뉴스(news.js, 나이 되면 자동 송출·8초 자동 닫힘)·Help 버튼 1번·🎲확률·60초 타이머(settings soloChoiceSeconds, 0이면 끔)·마지막 분위·도움말(HELP_MODE="solo"→HELP.soloGuide) 포함. multi.css도 불러옴(body.solo로 통계 2칸). 모바일용.html은 이걸 합친 파일. 백업: `백업/v1_혼자하기`, git 태그 v1-solo.
 - `data/` 게임 내용. 사용자 스크립트는 여기만 고친다.
   - `settings.js` 능력치·기본값·BGM / `stages.js` 시기와 일상 문장 / `events.js` 이벤트 / `endings.js` 엔딩
   - 새 데이터 파일을 만들면 `index.html`의 script 목록에 추가.

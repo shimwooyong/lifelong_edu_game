@@ -363,7 +363,7 @@ body.anchor-page { background: #120a0e; background-image: repeating-linear-gradi
 .ev-timer i { position: absolute; left: 0; top: 0; bottom: 0; background: #4fb35f; transition: width .5s linear; }
 .ev-timer span { position: relative; display: block; text-align: center; font-size: 12px; line-height: 14px; }
 .ev-timer.hurry i { background: var(--red); }
-/* 투자 확률, 교수님 찬스 */
+/* 투자 확률, Help */
 .odds { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
 .btn.chance { background: #fff3c4; border-style: dashed; }
 .btn.chance small { font-size: 11px; color: var(--muted); }
@@ -522,17 +522,17 @@ const SETTINGS = {
   // 배율 = (자산 ÷ 기준)의 제곱근, 최소~최대 사이로 제한
   luck: { base: 100, min: 0.5, max: 2 },
 
-  // 교육 멘토링(교수님 찬스): 시기마다 한 번, 그 시기의 '가장 좋은 선택'(mentor가 붙은 선택지)이 나올 때 확률 검사
+  // 교육 멘토링(Help): 시기마다 한 번, 그 시기의 '가장 좋은 선택'(mentor가 붙은 선택지)이 나올 때 확률 검사
   // 확률 = chance × 운 배율(자산) × repeat^(이미 나온 횟수). 한 일생에 평균 약 1번, 최대 max번
   mentoring: {
     chance: 0.2,
     repeat: 0.35,                   // 한 번 나온 뒤엔 다음 확률이 35%로 줄어듦 (2·3번은 드물게)
     max: 3,
     edge: 0.1,                      // 인생의 처음·마지막 10%(0~7세, 73~80세)에는 멘토링이 나오지 않음
-    title: "🎓 교육 멘토링",
-    text: `교수님 찬스가 찾아왔다!
-교수님이 이 시기에 가장 좋은 선택을 직접 알려 주십니다.
-교수님의 설명을 들은 뒤 '다음'을 누르세요.`,
+    title: "💡 Help",
+    text: `Help가 찾아왔다!
+Help가 이 시기에 가장 좋은 선택을 알려 줍니다.
+설명을 읽은 뒤 '다음'을 누르세요.`,
   },
 
   soloChoiceSeconds: 60,            // 혼자하기 선택 제한시간(초). 0이면 타이머 없음
@@ -646,7 +646,7 @@ addEvent({
       text: "공공도서관 영어 그림책 프로그램에 함께 다닌다",
       effects: { 자산: -2 },
       edu: "공공도서관 영유아 그림책 프로그램",
-      mentor: { effects: { 자산: 12 }, result: `교수님 말씀대로 비싼 영어유치원 대신 도서관 그림책 프로그램을 택했다.
+      mentor: { effects: { 자산: 12 }, result: `Help의 조언대로 비싼 영어유치원 대신 도서관 그림책 프로그램을 택했다.
 아낀 원비는 {이름}의 교육 적금이 되었고, {이름}은(는) 책 읽는 즐거움을 일찍 알게 되었다.` },
       result: `주말마다 부모님과 도서관에 갔다.
 영어 그림책을 읽어 주는 선생님 목소리에 {이름}의 눈이 반짝였다.`,
@@ -684,7 +684,7 @@ addEvent({
     {
       text: "청소년수련관 진로체험 프로그램에 참여한다",
       edu: "청소년수련관 진로체험 프로그램",
-      mentor: { effects: { 자산: 12 }, result: `교수님 조언대로 학원 대신 청소년수련관 진로체험에 참여했다.
+      mentor: { effects: { 자산: 12 }, result: `Help의 조언대로 학원 대신 청소년수련관 진로체험에 참여했다.
 학원비를 아낀 데다, 일찍 진로를 정한 덕분에 이후 공부에 낭비가 없었다.` },
       result: `방송국, 연구소, 요리 교실을 돌아다니며 다양한 직업을 체험했다.
 {이름}은(는) 처음으로 "이런 일을 해 보고 싶다"는 생각이 들었다.`,
@@ -749,7 +749,7 @@ addEvent({
       text: "국민내일배움카드로 자격증 과정을 듣는다",
       effects: { 자산: -2 },
       edu: "국민내일배움카드 직업훈련 과정",
-      mentor: { effects: { 자산: 18 }, result: `교수님이 알려 준 대로 국민내일배움카드로 훈련비를 지원받아 자격증을 땄다.
+      mentor: { effects: { 자산: 18 }, result: `Help가 알려 준 대로 국민내일배움카드로 훈련비를 지원받아 자격증을 땄다.
 자격증 수당과 승진이 이어지며 연봉이 크게 올랐다.` },
       result: `퇴근 후 온라인 강의를 듣고 주말엔 실습을 했다.
 쉽지 않았지만 자격증을 손에 쥔 날, 스스로가 조금 자랑스러웠다.`,
@@ -778,7 +778,7 @@ addEvent({
       text: "노후 자산관리 강의를 수강한다",
       effects: { 자산: 10 },
       edu: "노후 대비 자산관리 강의",
-      mentor: { effects: { 자산: 20 }, result: `교수님 말씀대로 지인의 투자 제안을 거절하고 노후 자산관리 강의를 들었다.
+      mentor: { effects: { 자산: 20 }, result: `Help의 조언대로 지인의 투자 제안을 거절하고 노후 자산관리 강의를 들었다.
 연금과 지출을 정리하자 새는 돈이 막혔고, 노후 자금이 눈에 띄게 불어났다.` },
       result: `연금, 보험, 지출 관리까지 하나씩 점검했다.
 막연한 불안이 '계획'으로 바뀌자 밤잠이 편해졌다.`,
@@ -827,7 +827,7 @@ addEvent({
       text: "바리스타 자격증에 도전한다",
       effects: { 자산: 5 },
       edu: "노인복지관 바리스타 자격증 과정",
-      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 바리스타 자격증에 도전했다.
+      mentor: { effects: { 자산: 15 }, result: `Help의 조언대로 바리스타 자격증에 도전했다.
 자격증을 따고 복지관 카페에서 일하게 되어, 용돈도 벌고 매일 사람들과 웃으며 지냈다.` },
       result: `처음엔 우유 거품 하나 내기도 어려웠다.
 석 달 뒤, 복지관 카페에서 {이름}이(가) 내린 라떼에 손님이 엄지를 들었다.`,
@@ -1243,11 +1243,11 @@ addEvent({
     { text: "교환학생 프로그램에 지원한다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: -12 }, edu: "대학 교환학생 프로그램",
       result: `한 학기를 낯선 나라에서 보냈다. 세상이 생각보다 넓다는 걸 알았다.` },
     { text: "국가장학금을 받고 학교 학습 지원 프로그램을 듣는다", requires: { notFlags: ["고졸취업"] }, effects: { 자산: 4 }, edu: "대학 교수학습지원센터 프로그램",
-      mentor: { effects: { 자산: 15 }, result: `교수님이 알려 준 대로 국가장학금을 신청하고 학교 학습지원 프로그램을 챙겼다.
+      mentor: { effects: { 자산: 15 }, result: `Help가 알려 준 대로 국가장학금을 신청하고 학교 학습지원 프로그램을 챙겼다.
 등록금 부담이 크게 줄었고, 공부 습관도 단단해졌다.` },
       result: `글쓰기 클리닉과 학습 코칭을 받으며 대학 공부에 적응했다.` },
     { text: "회사의 일학습병행 과정에 참여한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 5 }, edu: "일학습병행 과정",
-      mentor: { effects: { 자산: 15 }, result: `교수님 조언대로 일학습병행 과정에 참여했다.
+      mentor: { effects: { 자산: 15 }, result: `Help의 조언대로 일학습병행 과정에 참여했다.
 월급을 받으며 훈련을 받고 국가 자격까지 따서, 또래보다 빨리 자리를 잡았다.` },
       result: `일하면서 체계적으로 훈련을 받고 국가 자격도 얻었다.` },
     { text: "신입사원 교육만 듣고 일에 집중한다", requires: { flags: ["고졸취업"] }, effects: { 자산: 8 }, edu: "신입사원 직무교육",
@@ -1407,7 +1407,7 @@ addEvent({
 // 뉴스가 바꾸는 것:
 //   shock(G)   발표 순간 가족 자산 변화 → { asset, note }
 //   mods       이후 선택의 자산 효과를 바꿈 { test(ev, c, ch, G), asset: 숫자 또는 (기본효과) => 숫자, note }
-//   mentor     교육 멘토링(교수님 찬스)의 '최고 선택'을 바꿈 { 이벤트id: { pick: 선택지 문구 일부, effects, result } }
+//   mentor     교육 멘토링(Help)의 '최고 선택'을 바꿈 { 이벤트id: { pick: 선택지 문구 일부, effects, result } }
 //   이벤트의 requires: { world: ["뉴스id"] } → 그 뉴스가 터진 세상에서만 나오는 이벤트
 const NEWS = {
   birthYear: 2026,              // 자녀가 태어난 해
@@ -1488,7 +1488,7 @@ const NEWS = {
         ],
         mentor: {
           직무워크숍: { pick: "회사 워크숍", effects: { 자산: 18 },
-            result: `교수님은 "자격증보다 AI와 함께 일하는 법을 배우라"고 했다.
+            result: `Help는 "자격증보다 AI와 함께 일하는 법을 배우라"고 알려 주었다.
 회사 워크숍에서 AI로 업무를 바꾸는 법을 익혔고, 부서에서 꼭 필요한 사람이 되었다.` },
         },
       },
@@ -1546,7 +1546,7 @@ const NEWS = {
         ],
         mentor: {
           자산관리강의: { pick: "50+", effects: { 자산: 18 },
-            result: `교수님은 "70세까지 일하는 시대엔 돈보다 다음 일을 설계하라"고 했다.
+            result: `Help는 "70세까지 일하는 시대엔 돈보다 다음 일을 설계하라"고 알려 주었다.
 50+ 인생설계 프로그램에서 두 번째 커리어를 준비했고, 은퇴 대신 새 일을 시작했다.` },
         },
       },
@@ -1824,7 +1824,7 @@ const HELP = {
     ["누가 고르나요?", "자녀가 20세가 되기 전에는 부모 2명이 자녀의 교육을 결정합니다. 20세부터는 자녀 2명이 스스로 결정해요. 자녀가 30세가 되면 부모님(60세~)의 노년 이벤트도 함께 나오고, 그건 부모 2명이 결정합니다. 같은 해에 둘 다 나오면 부모 이벤트가 먼저예요."],
     ["어떻게 확정되나요?", "결정하는 두 사람이 같은 선택지를 골라야 확정됩니다. 의견이 다르면 대화해서 맞춰 보세요. 제한시간은 60초! 시간이 지나면 한 명만 골랐을 땐 그 선택, 둘이 달랐으면 둘 중 하나, 아무도 안 골랐으면 아무거나 자동으로 정해집니다."],
     ["가족 자산", "조마다 출발하는 소득분위(1~10분위)가 다릅니다. 돈이 드는 선택은 자산이 모자라면 고를 수 없어요. 자산이 많을수록 좋은 일이 조금 더 자주 생깁니다. 🎲 표시가 있는 선택지는 결과가 운에 따라 갈리며, 확률이 함께 적혀 있어요."],
-    ["🎓 교수님 찬스", "조마다 딱 한 번, 그 상황에서 가장 좋은 선택을 교수님이 대신 골라 줍니다. 두 사람이 모두 찬스 버튼을 눌러야 사용돼요. 결과가 뻔한 상황에서는 쓸 수 없습니다."],
+    ["💡 Help", "조마다 딱 한 번, 그 상황에서 가장 좋은 선택을 Help가 대신 골라 줍니다. 두 사람이 모두 Help 버튼을 눌러야 사용돼요. 결과가 뻔한 상황에서는 쓸 수 없습니다."],
     ["📡 브레이킹 뉴스", "자녀가 10·20·30·40·50세가 될 때 세상을 바꾸는 뉴스가 발표됩니다. 뉴스는 가족 자산과 이후 선택의 결과를 바꿔요. 선생님이 발표할 때까지 잠시 기다려 주세요."],
     ["엔딩", "자녀가 60세가 되면 끝납니다. 자녀가 경험한 '좋은 교육'이 몇 가지인지에 따라 엔딩이 달라지고, 마지막 가족 자산이 몇 분위인지도 알려 줍니다."],
   ],
@@ -1832,7 +1832,7 @@ const HELP = {
     ["혼자하기란?", "한 사람이 태어나서 80세가 될 때까지의 일생을 혼자 살아 보는 모드입니다. '▶ 다음 이벤트'를 누르면 인생의 다음 갈림길로 넘어가요."],
     ["선택하기", "이벤트마다 선택지 하나를 고르세요. 제한시간은 60초이고, 시간이 지나면 고를 수 있는 선택지 중 하나가 자동으로 정해집니다. 🎲 표시가 있는 선택지는 결과가 운에 따라 갈리며 확률이 함께 적혀 있어요."],
     ["자산", "태어난 집의 소득분위(1~10분위)에 따라 출발 자산이 다릅니다. 돈이 드는 선택은 자산이 모자라면 고를 수 없고, 자산이 많을수록 좋은 일이 조금 더 자주 생깁니다."],
-    ["🎓 교수님 찬스", "일생에 딱 한 번, 그 상황에서 가장 좋은 선택을 교수님이 대신 골라 줍니다. 결과가 뻔한 상황에서는 쓸 수 없어요."],
+    ["💡 Help", "일생에 딱 한 번, 그 상황에서 가장 좋은 선택을 Help가 대신 골라 줍니다. 결과가 뻔한 상황에서는 쓸 수 없어요."],
     ["📡 브레이킹 뉴스", "10·20·30·40·50세가 될 때 세상을 바꾸는 뉴스가 나옵니다. 뉴스는 자산과 이후 선택의 결과를 바꾸고, 뉴스가 만든 새로운 이벤트도 생겨요."],
     ["엔딩", "80세가 되면 끝납니다. 경험한 '좋은 교육'이 몇 가지인지에 따라 엔딩이 달라지고, 마지막 자산이 몇 분위인지도 알려 줍니다."],
   ],
@@ -2754,7 +2754,7 @@ window.Pixel = (() => {
 
     if (window.Glossary) $("evText").innerHTML = Glossary.mark(fill(ev.text));
 
-    // 교수님 찬스: 한 번만, 최고 선택이 정해진 이벤트에서만(뉴스가 최고 선택을 바꿨으면 그걸로), 인생 양끝 구간 제외
+    // Help: 한 번만, 최고 선택이 정해진 이벤트에서만(뉴스가 최고 선택을 바꿨으면 그걸로), 인생 양끝 구간 제외
     let swap = null;
     for (const id in S.world) { const n = worldItem(id); if (n && n.mentor && n.mentor[ev.id]) swap = n.mentor[ev.id]; }
     const best = (swap && list.find((c) => c.text.includes(swap.pick))) || list.find((c) => c.mentor);
@@ -2789,10 +2789,10 @@ window.Pixel = (() => {
       }
       box.appendChild(b);
     });
-    // 교수님 찬스 버튼
+    // Help 버튼
     const cb = document.createElement("button");
     cb.className = "btn chance";
-    cb.innerHTML = `🎓 교수님 찬스 <small>${S.chanceUsed ? "(이미 사용함)" : S.chance ? "(일생에 1번)" : "(이 상황에선 쓸 수 없어요)"}</small>`;
+    cb.innerHTML = `💡 Help <small>${S.chanceUsed ? "(이미 사용함)" : S.chance ? "(일생에 1번)" : "(이 상황에선 쓸 수 없어요)"}</small>`;
     if (S.chanceUsed || !S.chance) cb.disabled = true;
     else cb.onclick = () => { S.chanceUsed = true; choose(S.chance.c, true); };
     box.appendChild(cb);
@@ -2828,10 +2828,10 @@ window.Pixel = (() => {
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
     if (mentored) {
-      // 교수님 찬스: 가장 좋은 선택을 한 것으로 하고 찬스 결과를 적용 (뉴스가 바꾼 최고 선택이면 그 결과)
+      // Help: 가장 좋은 선택을 한 것으로 하고 찬스 결과를 적용 (뉴스가 바꾼 최고 선택이면 그 결과)
       const m = (S.chance && S.chance.swap) || c.mentor || {};
       out = { ...c, effects: m.effects || c.effects, result: m.result || c.result };
-      $("evText").textContent = `🎓 교수님 찬스로 고른 선택: "${fill(c.text)}"`;
+      $("evText").textContent = `💡 Help로 고른 선택: "${fill(c.text)}"`;
     } else if (c.outcomes) {
       // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
       const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
@@ -2855,7 +2855,7 @@ window.Pixel = (() => {
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
     if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
-    log(`${mentored ? "🎓 교수님 찬스 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    log(`${mentored ? "💡 Help · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
     playSound(out.sound || c.sound);
 

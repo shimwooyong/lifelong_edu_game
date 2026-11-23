@@ -201,11 +201,11 @@
         else b.onclick = () => act((G) => Logic.vote(G, track, role, i));
         box.appendChild(b);
       });
-      // 교수님 찬스: 조마다 한 번, 최고 선택이 정해진 이벤트에서만
+      // Help: 조마다 한 번, 최고 선택이 정해진 이벤트에서만
       const cb = document.createElement("button");
       const can = Logic.canChance(G, p);
       cb.className = "btn chance" + (p.votes[role] === Logic.CHANCE ? " picked" : "");
-      cb.innerHTML = `🎓 교수님 찬스 <small>${G.chanceUsed ? "(이미 사용함)" : p.mentor < 0 ? "(이 상황에선 쓸 수 없어요)" : "(조마다 1번 · 둘 다 누르면 사용)"}</small> ${badges(Logic.CHANCE)}`;
+      cb.innerHTML = `💡 Help <small>${G.chanceUsed ? "(이미 사용함)" : p.mentor < 0 ? "(이 상황에선 쓸 수 없어요)" : "(조마다 1번 · 둘 다 누르면 사용)"}</small> ${badges(Logic.CHANCE)}`;
       if (!deciding || !can) cb.disabled = true;
       else cb.onclick = () => act((G) => Logic.vote(G, track, role, Logic.CHANCE));
       box.appendChild(cb);
@@ -217,7 +217,7 @@
     } else {
       box.style.display = "none";
       const { c, out } = Logic.resultOf(p);
-      $("evText").textContent = `선택: ${Logic.fill(c.text, ch.name)}${p.res.m ? " (🎓 교수님 찬스)" : ""}${p.timedOut ? " (⏰ 시간 초과로 자동 결정)" : ""}`;
+      $("evText").textContent = `선택: ${Logic.fill(c.text, ch.name)}${p.res.m ? " (💡 Help)" : ""}${p.timedOut ? " (⏰ 시간 초과로 자동 결정)" : ""}`;
       $("evResultText").textContent = Logic.fill(out.result || "", ch.name);
       const d = p.res.d;
       $("evDeltas").innerHTML = (d ? `<span style="color:${d > 0 ? "#2f8f5b" : "#b13e53"}">가족 자산 ${d > 0 ? "+" : ""}${d}</span>` : "")

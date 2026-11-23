@@ -231,7 +231,7 @@
 
     if (window.Glossary) $("evText").innerHTML = Glossary.mark(fill(ev.text));
 
-    // 교수님 찬스: 한 번만, 최고 선택이 정해진 이벤트에서만(뉴스가 최고 선택을 바꿨으면 그걸로), 인생 양끝 구간 제외
+    // Help: 한 번만, 최고 선택이 정해진 이벤트에서만(뉴스가 최고 선택을 바꿨으면 그걸로), 인생 양끝 구간 제외
     let swap = null;
     for (const id in S.world) { const n = worldItem(id); if (n && n.mentor && n.mentor[ev.id]) swap = n.mentor[ev.id]; }
     const best = (swap && list.find((c) => c.text.includes(swap.pick))) || list.find((c) => c.mentor);
@@ -266,10 +266,10 @@
       }
       box.appendChild(b);
     });
-    // 교수님 찬스 버튼
+    // Help 버튼
     const cb = document.createElement("button");
     cb.className = "btn chance";
-    cb.innerHTML = `🎓 교수님 찬스 <small>${S.chanceUsed ? "(이미 사용함)" : S.chance ? "(일생에 1번)" : "(이 상황에선 쓸 수 없어요)"}</small>`;
+    cb.innerHTML = `💡 Help <small>${S.chanceUsed ? "(이미 사용함)" : S.chance ? "(일생에 1번)" : "(이 상황에선 쓸 수 없어요)"}</small>`;
     if (S.chanceUsed || !S.chance) cb.disabled = true;
     else cb.onclick = () => { S.chanceUsed = true; choose(S.chance.c, true); };
     box.appendChild(cb);
@@ -305,10 +305,10 @@
     // 확률 결과가 있으면 하나를 고른다
     let out = c;
     if (mentored) {
-      // 교수님 찬스: 가장 좋은 선택을 한 것으로 하고 찬스 결과를 적용 (뉴스가 바꾼 최고 선택이면 그 결과)
+      // Help: 가장 좋은 선택을 한 것으로 하고 찬스 결과를 적용 (뉴스가 바꾼 최고 선택이면 그 결과)
       const m = (S.chance && S.chance.swap) || c.mentor || {};
       out = { ...c, effects: m.effects || c.effects, result: m.result || c.result };
-      $("evText").textContent = `🎓 교수님 찬스로 고른 선택: "${fill(c.text)}"`;
+      $("evText").textContent = `💡 Help로 고른 선택: "${fill(c.text)}"`;
     } else if (c.outcomes) {
       // 자산이 많을수록 좋은 결과 쪽으로 확률이 기운다
       const ws = c.outcomes.map((o) => weighted(o.chance, toneOf(o)));
@@ -332,7 +332,7 @@
     const eduGood = (out.eduGood !== undefined ? out.eduGood : c.eduGood) !== false;
     if (eduName) { S.edu.push({ age: S.age, name: fill(eduName), good: eduGood }); applied.교육 = 1; }
 
-    log(`${mentored ? "🎓 교수님 찬스 · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
+    log(`${mentored ? "💡 Help · " : ""}${fill(S.current.title)} → ${fill(c.text)}`, "event");
     renderStats("stats", applied);
     playSound(out.sound || c.sound);
 
