@@ -244,3 +244,33 @@ body.anchor-page { background: #120a0e; background-image: repeating-linear-gradi
 .news-desk { background: #1c1015; color: #fff; border: 3px solid #000; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .news-desk .muted { color: #c9a9b0; }
 .news-desk .bk-head { color: #fff; }
+
+/* ── 이벤트 창: 스크롤 없이 한 화면에 (그림이 먼저 줄어듦, 글자·버튼은 화면 높이에 맞춰 조금씩) ── */
+#eventModal { padding: 8px; }
+#eventModal .card {
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px);
+  padding: clamp(10px, 1.8vh, 16px);
+}
+#eventModal .card > * { flex-shrink: 0; }
+#eventModal .ev-image { flex: 0 1 auto; min-height: 48px; max-height: 28vh; margin-bottom: clamp(6px, 1vh, 10px); }
+#eventModal .card h2 { font-size: clamp(17px, 2.6vh, 21px); margin: clamp(4px, .8vh, 8px) 0; }
+#eventModal .ev-text { font-size: clamp(13px, 1.9vh, 15px); margin-bottom: clamp(6px, 1.2vh, 14px); line-height: 1.5; }
+#eventModal .ev-timer { margin-bottom: clamp(4px, .8vh, 10px); }
+#eventModal .choices { gap: clamp(4px, .8vh, 8px); }
+#eventModal .choices .btn { padding: clamp(5px, 1vh, 10px) 12px; font-size: clamp(13px, 1.9vh, 15px); line-height: 1.35; }
+#eventModal .ev-msg { margin-top: clamp(4px, .8vh, 10px); font-size: clamp(12px, 1.7vh, 14px); }
+#eventModal .deltas { margin-bottom: clamp(6px, 1vh, 12px); }
+#eventModal .info { padding: clamp(5px, 1vh, 10px) 12px; margin-bottom: clamp(6px, 1.2vh, 14px); font-size: clamp(12px, 1.7vh, 13px); line-height: 1.45; }
+#eventModal #evContinue { padding: clamp(6px, 1.2vh, 10px) 16px; }
+/* 넓은 화면(PC): 그림은 왼쪽, 글과 선택지는 오른쪽 */
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) {
+  #eventModal .card {
+    max-width: 920px; display: grid; column-gap: 20px; align-content: start;
+    grid-template-columns: minmax(0, 42%) minmax(0, 1fr); grid-template-rows: repeat(9, auto) 1fr;
+  }
+  #eventModal .card > * { grid-column: 2; }
+  #eventModal .ev-image { grid-column: 1; grid-row: 1 / -1; max-height: none; height: auto; align-self: start; margin: 0; }
+}
+/* 이벤트 창이 열려 있을 땐 떠 있는 음악·도움말 버튼이 창을 가리지 않게 */
+.help-fab, .bgm-btn { z-index: 5; }
