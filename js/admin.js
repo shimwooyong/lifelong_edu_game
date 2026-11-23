@@ -89,8 +89,10 @@
     const lines = it.script.map(([who, t], n) => `<div class="line ${n % 2 ? "a2" : "a1"}"><span class="who">${esc(who.replace("앵커", "읽기"))}</span><p>${esc(t)}</p></div>`).join("");
     let ctrl;
     if (live === k) ctrl = `<button id="endBtn" class="btn primary big">■ 방송 종료 · 게임 다시 시작</button>`;
-    else if (done[k]) ctrl = `<p class="muted">이미 발표한 뉴스예요.</p>`;
     else if (isLive) ctrl = `<p class="muted">다른 뉴스를 방송 중이에요. 먼저 종료해 주세요.</p>`;
+    // 이미 발표한 뉴스도 언제든 다시 송출 가능 (실수로 끊은 경우 등). 뉴스 효과는 조마다 한 번만 적용됨
+    else if (done[k]) ctrl = `<button id="airBtn" class="btn red big">🔁 다시 송출</button>
+      <p class="muted">이미 발표한 뉴스예요. 다시 송출해도 뉴스 효과는 한 번만 적용돼요.</p>`;
     else ctrl = `<button id="airBtn" class="btn red big">🔴 속보 송출 시작</button>
       <p class="muted">이 시점에 도착해 기다리는 조: <b>${wait}</b> / 시작한 조 ${gs.length} · ${reached < gs.length ? "아직 도착하지 않은 조가 있어요. 대부분 모이면 송출하세요." : "모든 조가 도착했어요!"}</p>`;
     $("newsPanel").innerHTML = `
@@ -131,6 +133,50 @@
       }).join("");
     }).join("");
   }
+
+  // ── 결과 저장: 엑셀에서 바로 열리고 고칠 수 있는 CSV 파일 ──
+  function saveResults() {
+    const gs = (root && root.groups) || {};
+    const list = order(gs).filter((g) => gs[g].game).map((g) => ({ g, grp: gs[g], G: Logic.normalize(gs[g].game) }));
+    if (!list.length) { alert("아직 시작한 조가 없어요."); return; }
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const row = (...a) => a.map(q).join(",");
+    const eduOf = (o) => Logic.goodEdu(o.G.chars.child);
+    const rankBy = (val) => { const s = list.map(val).sort((a, b) => b - a); return (o) => 1 + s.indexOf(val(o)); };
+    const rE = rankBy(eduOf), rA = rankBy((o) => o.G.asset);
+    const ranked = list.map((o) => ({ ...o, re: rE(o), ra: rA(o) }))
+      .sort((a, b) => (a.re + a.ra) - (b.re + b.ra) || a.re - b.re || b.G.asset - a.G.asset);
+    const who = (w) => (w === "parent" ? "부모" : "자녀");
+    const out = [];
+    out.push(row("배움의 일생 · 조별 결과", new Date().toLocaleString("ko-KR")), "");
+    out.push(row("종합 순위", "조", "자녀 이름", "출발 소득분위", "시작 자산", "마지막 자산", "마지막 소득분위",
+      "자녀 좋은 교육(가지)", "교육 순위", "자산 순위", "자녀 받은 교육(번)", "부모 받은 교육(번)",
+      "외적 동기(번)", "내적 동기(번)", "Help 사용", "엔딩", "진행 상태", "부모 1", "부모 2", "자녀 1", "자녀 2"));
+    ranked.forEach((o, n) => {
+      const G = o.G, m = Logic.motiveCounts(G), mem = o.grp.members || {};
+      out.push(row(n + 1, o.g.slice(1) + "조", G.chars.child.name, G.cls, G.hist.length ? G.hist[0][1] : "", G.asset, Logic.decileOf(G.asset),
+        eduOf(o), o.re, o.ra, G.chars.child.edu.length, G.chars.parent.edu.length, m.외적, m.내적, G.chanceUsed ? "예" : "아니오",
+        G.ended && G.ending ? G.ending.title : "", G.ended ? "끝" : `진행 중 (자녀 ${G.chars.child.age}세)`,
+        ...["p1", "p2", "c1", "c2"].map((r) => (mem[r] ? mem[r].name : ""))));
+    });
+    out.push("", row("교육 이력"), row("조", "누구", "나이", "교육", "좋은 교육", "배운 이유"));
+    list.forEach((o) => ["child", "parent"].forEach((t) => o.G.chars[t].edu.forEach((e) =>
+      out.push(row(o.g.slice(1) + "조", who(t), e.age, e.name, e.good ? "예" : "아니오(사교육 등)", e.motive || "")))));
+    out.push("", row("선택·뉴스 기록"), row("조", "연도", "누구", "나이", "내용"));
+    list.forEach((o) => o.G.log.filter((l) => l.k === "event" || l.k === "news").forEach((l) => {
+      const age = l.k === "news" ? l.y : l.w === "parent" ? l.y + SETTINGS.multi.gap : l.y;
+      out.push(row(o.g.slice(1) + "조", Logic.birthYear() + l.y, l.k === "news" ? "뉴스" : who(l.w), age, l.t));
+    }));
+    // 엑셀이 한글을 제대로 읽도록 맨 앞에 BOM
+    const blob = new Blob(["﻿" + out.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const d = new Date(), pad = (x) => String(x).padStart(2, "0");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `배움의일생_결과_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $("saveBtn").onclick = saveResults;
 
   // ── 결과 비교 ──
   const COLORS = ["#e8202a", "#3b5dc9", "#2f8f5b", "#ef7d57", "#7a4c9e", "#257179", "#b08a5a", "#41a6f6", "#b13e53", "#241f2e"];

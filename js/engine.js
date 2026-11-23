@@ -318,6 +318,9 @@
     }
     if (timedOut) $("evText").textContent = `⏰ 시간 초과로 자동 결정: "${fill(c.text)}"`;
     const effects = { ...(out.effects || {}) };
+    // 교육 없이 돈만 버는 선택(일만 하기 등)은 보상을 키움 (settings.js workBoost)
+    const eduN = out.edu !== undefined ? out.edu : c.edu;
+    if (!c.outcomes && !eduN && effects.자산 > 0) effects.자산 = Math.round(effects.자산 * (SETTINGS.workBoost || 1));
     // 뉴스가 바꾼 세상의 추가 효과
     const wm = worldMods(S.current, c, effects.자산 || 0);
     if (wm.add) effects.자산 = (effects.자산 || 0) + wm.add;

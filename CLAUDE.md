@@ -18,7 +18,8 @@
 - 이벤트 필드: id, age 또는 ages:[min,max], chance, good(true/false: 자산 가중치), requires{min,max,flags,notFlags,eduCount,goodEdu}, title, text, image, sound, choices[{text, effects, result, edu, eduGood(false=좋은 교육 아님), flags, requires, next, outcomes[{chance,good,effects,result,...}], mentor{effects,result}(시기별 최고 선택, 교육 멘토링용)}], info
 - 능력치는 자산 하나(시작: 소득분위 무작위). 엔딩은 좋은 교육 가짓수(goodEdu)로 결정.
 - 텍스트의 `{이름}이(가)` 등은 자동 조사 처리.
-- 발표 자료: `발표자료/`(pptx, 만들기.ps1로 재생성, 안내.md에 받기 링크).
+- 발표 자료: `발표자료/`(pptx는 만들기.ps1, 진행자 큐시트 docx는 큐시트_만들기.ps1로 재생성, 안내.md에 받기 링크).
+- 밸런스: settings.js `workBoost`(교육 없이 돈만 버는 확정 선택의 자산 증가 배율, 지금 2). 관리자 💾 결과 저장은 admin.js saveResults(CSV, BOM).
 - 사용자용 입력 양식: `스크립트_양식.md`. 미리보기: launch.json "game"(localhost:8123).
 - 사용자는 코딩 설명을 원하지 않음. 결과만 짧게 알린다.
 

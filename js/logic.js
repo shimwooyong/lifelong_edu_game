@@ -238,7 +238,10 @@ const Logic = (() => {
       out = c.outcomes[oi];
     }
     const before = G.asset;
-    const base = ((out.effects || {}).자산) || 0;
+    let base = ((out.effects || {}).자산) || 0;
+    // 교육 없이 돈만 버는 선택(일만 하기 등)은 보상을 키움 (settings.js workBoost)
+    const eduN = out.edu !== undefined ? out.edu : c.edu;
+    if (!c.outcomes && !eduN && base > 0) base = Math.round(base * (SETTINGS.workBoost || 1));
     const wm = worldMods(G, ev, c, ch, base);
     G.asset = Math.max(0, Math.round(before + base + wm.add));
     G.hist.push([G.year, G.asset]);

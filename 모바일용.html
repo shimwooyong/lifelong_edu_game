@@ -583,6 +583,7 @@ Help가 이 시기에 가장 좋은 선택을 알려 줍니다.
 설명을 읽은 뒤 '다음'을 누르세요.`,
   },
 
+  workBoost: 2,                     // 교육 없이 돈만 버는 선택(일만 하기 등)의 자산 증가 배율 (1이면 원래대로)
   soloChoiceSeconds: 60,            // 혼자하기 선택 제한시간(초). 0이면 타이머 없음
   bgm: "",                          // 예: "missing:sounds/bgm.mp3"
   randomNames: ["김하늘", "이도윤", "박서연", "최지호", "정하린", "강민준", "윤서아", "한지우"],
@@ -2889,6 +2890,9 @@ window.Pixel = (() => {
     }
     if (timedOut) $("evText").textContent = `⏰ 시간 초과로 자동 결정: "${fill(c.text)}"`;
     const effects = { ...(out.effects || {}) };
+    // 교육 없이 돈만 버는 선택(일만 하기 등)은 보상을 키움 (settings.js workBoost)
+    const eduN = out.edu !== undefined ? out.edu : c.edu;
+    if (!c.outcomes && !eduN && effects.자산 > 0) effects.자산 = Math.round(effects.자산 * (SETTINGS.workBoost || 1));
     // 뉴스가 바꾼 세상의 추가 효과
     const wm = worldMods(S.current, c, effects.자산 || 0);
     if (wm.add) effects.자산 = (effects.자산 || 0) + wm.add;
