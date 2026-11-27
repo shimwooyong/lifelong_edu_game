@@ -4,7 +4,7 @@
 
 ## 구조 (빌드 없음)
 - **조별 멀티플레이(메인)**: `index.html`(학생) + `admin.html`(관리자). `js/net.js`(Firebase 또는 로컬 테스트), `js/logic.js`(규칙), `js/player.js`, `js/admin.js`, `css/multi.css`, `js/firebase-config.js`(설정·관리자 비번).
-  - 한 조=한 가족: 부모 1·2, 자녀 1·2. 자녀 1명(0→60세), 부모(30→90세). 자녀 30세 전엔 부모 둘이, 이후엔 자녀 둘이 자녀 선택. 자녀 30세부터 부모 이벤트(부모 나이 60~90)도 동시 진행, 부모 둘이 결정. 둘이 같은 선택지를 골라야 확정(결원으로 짝이 비면 혼자 골라도 확정, 두 자리 다 비면 조원 모두가 결정: G.seats). 가족 자산 하나 공유. 엔딩은 자녀 좋은 교육 수 × endingScale(settings.js multi).
+  - 한 조=한 가족: 부모 1·2, 자녀 1·2. 자녀 1명(0→60세), 부모(30→90세). 자녀 20세 전엔 부모 둘이, 이후엔 자녀 둘이 자녀 선택(independentAge). 자녀 30세부터 부모 이벤트(부모 나이 60~90)도 진행(parentStart, 같은 해엔 부모 먼저), 부모 둘이 결정. 둘이 같은 선택지를 골라야 확정(결원으로 짝이 비면 혼자 골라도 확정, 두 자리 다 비면 조원 모두가 결정: G.seats). 가족 자산 하나 공유. 엔딩은 자녀 좋은 교육 수 × endingScale(settings.js multi).
   - 새 데이터 파일은 index.html, admin.html, 혼자하기.html 세 곳의 script 목록에 추가. (news.js도 세 곳 모두에 있음)
   - **브레이킹 뉴스**: `data/news.js`(뉴스 5시점×후보, 효과 mods/shock/mentor, 뉴스 세상 전용 이벤트 requires.world, 토론 질문), 관리자 화면의 📡 뉴스 데스크(원고·송출·종료, 앵커 화면은 2026-11-17에 없앰. 학생 화면 뉴스는 송출~종료 동안 한 번만 뜨고 뒤에 다시 뜨는 카드 없음)와 🎤 조별 소식 읽어 주기, `js/breaking.js`(긴급 배너). 방 만들 때 config.news에 후보 번호 저장, 송출 상태는 news/live·news/done. 조가 뉴스 시점에 먼저 도착하면 G.waitNews로 대기.
   - 관리자 '📊 결과 비교' 탭: 자산 그래프(G.hist)·엔딩·배운 이유(외적/내적, logic.js motiveOf)·뉴스 직후 첫 선택(G.afterNews)·토론 질문.
